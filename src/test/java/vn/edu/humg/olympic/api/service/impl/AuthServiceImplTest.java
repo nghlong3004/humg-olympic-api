@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import vn.edu.humg.olympic.api.constant.APIConstant;
@@ -53,6 +54,9 @@ class AuthServiceImplTest {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private UserDetailsService userDetailsService;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -89,10 +93,7 @@ class AuthServiceImplTest {
                                                       Date.valueOf("2004-03-30"), "0987123456", "HUMG",
                                                       "Control Engineering");
 
-        User existing = User.builder()
-                            .id(1L)
-                            .email("long@example.com")
-                            .build();
+        User existing = User.builder().id(1L).email("long@example.com").build();
 
         when(userRepository.findByEmail("long@example.com")).thenReturn(Optional.of(existing));
 
@@ -114,10 +115,9 @@ class AuthServiceImplTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(
                 authentication);
 
-        when(tokenService.generateAccessToken(authentication)).thenReturn("access-token");
-        when(tokenService.generateRefreshToken(authentication)).thenReturn("refresh-token");
+        when(tokenService.generateAccessToken(authentication)).thenReturn(APIConstant.ACCESS_TOKEN_NAME);
+        when(tokenService.generateRefreshToken(authentication)).thenReturn(APIConstant.REFRESH_TOKEN_NAME);
 
-        ReflectionTestUtils.setField(authService, "name", "refresh_token");
         ReflectionTestUtils.setField(authService, "cookieSecure", true);
         ReflectionTestUtils.setField(authService, "refreshExpirationMinutes", 60);
         ReflectionTestUtils.setField(authService, "sameSite", "Strict");
@@ -126,11 +126,11 @@ class AuthServiceImplTest {
 
         AuthResponse authResponse = response.authResponse();
         assertThat(authResponse).isNotNull();
-        assertThat(authResponse.accessToken()).isEqualTo("access-token");
+        assertThat(authResponse.accessToken()).isEqualTo(APIConstant.ACCESS_TOKEN_NAME);
 
         ResponseCookie refreshCookie = response.refreshCookie();
-        assertThat(refreshCookie.getName()).isEqualTo("refresh_token");
-        assertThat(refreshCookie.getValue()).isEqualTo("refresh-token");
+        assertThat(refreshCookie.getName()).isEqualTo(APIConstant.REFRESH_TOKEN_NAME);
+        assertThat(refreshCookie.getValue()).isEqualTo(APIConstant.REFRESH_TOKEN_NAME);
         assertThat(refreshCookie.isHttpOnly()).isTrue();
         assertThat(refreshCookie.isSecure()).isTrue();
         assertThat(refreshCookie.getPath()).isEqualTo(APIConstant.API_AUTH_PATH);
@@ -161,13 +161,12 @@ class AuthServiceImplTest {
 
     @Test
     void logout_shouldReturnExpiredCookie() {
-        ReflectionTestUtils.setField(authService, "name", "refresh_token");
         ReflectionTestUtils.setField(authService, "cookieSecure", true);
         ReflectionTestUtils.setField(authService, "sameSite", "Strict");
 
         ResponseCookie cookie = authService.logout();
 
-        assertThat(cookie.getName()).isEqualTo("refresh_token");
+        assertThat(cookie.getName()).isEqualTo(APIConstant.REFRESH_TOKEN_NAME);
         assertThat(cookie.getValue()).isEmpty();
         assertThat(cookie.isHttpOnly()).isTrue();
         assertThat(cookie.isSecure()).isTrue();
@@ -175,4 +174,50 @@ class AuthServiceImplTest {
         assertThat(cookie.getMaxAge()).isEqualTo(Duration.ZERO); // maxAge(0)
         assertThat(cookie.getSameSite()).isEqualTo("Strict");
     }
+
+    @Test
+    void refreshToken_shouldReturnNewAccessToken_whenRefreshTokenValid() {
+        String refreshToken = "valid-refresh-token";
+        String username = "long@example.com";
+
+        doNothing().when(tokenService).validateRefreshToken(refreshToken);
+
+        when(tokenService.getUsernameFromToken(refreshToken)).thenReturn(username);
+
+        var userDetails = org.springframework.security.core.userdetails.User.withUsername(username)
+                                                                            .password("ignored")
+                                                                            .authorities("ROLE_STUDENT")
+                                                                            .build();
+
+        when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
+        when(tokenService.generateAccessToken(any(Authentication.class))).thenReturn("new-access-token");
+
+        AuthResponse response = authService.refreshToken(refreshToken);
+
+        assertThat(response).isNotNull();
+        assertThat(response.accessToken()).isEqualTo("new-access-token");
+
+        verify(tokenService).validateRefreshToken(refreshToken);
+        verify(tokenService).getUsernameFromToken(refreshToken);
+        verify(userDetailsService).loadUserByUsername(username);
+        verify(tokenService).generateAccessToken(any(Authentication.class));
+    }
+
+    @Test
+    void refreshToken_shouldThrowException_whenRefreshTokenInvalid() {
+        String refreshToken = "invalid-refresh-token";
+
+        doThrow(new ResourceException(ErrorCode.INVALID_REFRESH_TOKEN)).when(tokenService)
+                                                                       .validateRefreshToken(refreshToken);
+
+        assertThatThrownBy(() -> authService.refreshToken(refreshToken)).isInstanceOf(ResourceException.class)
+                                                                        .hasMessage(
+                                                                                ErrorCode.INVALID_REFRESH_TOKEN.getMessage());
+
+        verify(tokenService).validateRefreshToken(refreshToken);
+        verify(tokenService, never()).getUsernameFromToken(anyString());
+        verify(userDetailsService, never()).loadUserByUsername(anyString());
+        verify(tokenService, never()).generateAccessToken(any());
+    }
+
 }
