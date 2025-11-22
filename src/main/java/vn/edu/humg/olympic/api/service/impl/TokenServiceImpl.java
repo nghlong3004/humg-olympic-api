@@ -3,12 +3,14 @@ package vn.edu.humg.olympic.api.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
+import vn.edu.humg.olympic.api.constant.APIConstant;
+import vn.edu.humg.olympic.api.exception.ErrorCode;
+import vn.edu.humg.olympic.api.exception.ResourceException;
 import vn.edu.humg.olympic.api.service.TokenService;
 
 import java.time.Instant;
@@ -30,12 +32,12 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public String generateAccessToken(Authentication authentication) {
-        return generateToken(authentication, accessExpirationMinutes, "ACCESS");
+        return generateToken(authentication, accessExpirationMinutes, APIConstant.ACCESS_TOKEN_NAME);
     }
 
     @Override
     public String generateRefreshToken(Authentication authentication) {
-        return generateToken(authentication, refreshExpirationMinutes, "REFRESH");
+        return generateToken(authentication, refreshExpirationMinutes, APIConstant.REFRESH_TOKEN_NAME);
     }
 
     @Override
@@ -45,13 +47,13 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public boolean validateAccessToken(String token) {
-        return validateTokenInternal(token, "ACCESS");
+    public void validateAccessToken(String token) {
+        validateTokenInternal(token, APIConstant.ACCESS_TOKEN_NAME);
     }
 
     @Override
-    public boolean validateRefreshToken(String token) {
-        return validateTokenInternal(token, "REFRESH");
+    public void validateRefreshToken(String token) {
+        validateTokenInternal(token, APIConstant.REFRESH_TOKEN_NAME);
     }
 
     private String generateToken(Authentication authentication, int expirationMinutes, String type) {
@@ -72,24 +74,37 @@ public class TokenServiceImpl implements TokenService {
                                           .claim("type", type)
                                           .build();
 
-        JwtEncoderParameters params = JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256)
-                                                                         .build(), claims);
+        JwtEncoderParameters params = JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims);
 
-        return jwtEncoder.encode(params)
-                         .getTokenValue();
+        return jwtEncoder.encode(params).getTokenValue();
     }
 
-    private boolean validateTokenInternal(String token, String expectedType) {
+    private void validateTokenInternal(String token, String expectedType) {
         try {
             Jwt jwt = jwtDecoder.decode(token);
+
             String type = jwt.getClaimAsString("type");
             if (!expectedType.equals(type)) {
-                throw new BadJwtException("Invalid token type: expected " + expectedType);
+                throw new ResourceException(getErrorCodeInvalid(expectedType));
             }
-            return true;
+
+        } catch (JwtValidationException ex) {
+            if (ex.getMessage().contains("Jwt expired") || ex.getMessage().contains("expired")) {
+                ErrorCode errorCode =
+                        expectedType.equals(APIConstant.ACCESS_TOKEN_NAME) ? ErrorCode.ACCESS_TOKEN_EXPIRED
+                                                                           : ErrorCode.REFRESH_TOKEN_EXPIRED;
+                throw new ResourceException(errorCode);
+            }
+
+            throw new ResourceException(getErrorCodeInvalid(expectedType));
+
         } catch (JwtException ex) {
-            log.error("Error while trying to validate {} token", expectedType, ex);
-            throw new BadCredentialsException("Invalid JWT token", ex);
+            throw new ResourceException(getErrorCodeInvalid(expectedType));
         }
+    }
+
+    private ErrorCode getErrorCodeInvalid(String expectedType) {
+        return expectedType.equals(APIConstant.ACCESS_TOKEN_NAME) ? ErrorCode.INVALID_ACCESS_TOKEN
+                                                                  : ErrorCode.INVALID_REFRESH_TOKEN;
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,16 +43,23 @@ public class AuthController {
         var response = authService.login(request);
 
         return ResponseEntity.ok()
-                             .header(HttpHeaders.SET_COOKIE, response.refreshCookie()
-                                                                     .toString())
+                             .header(HttpHeaders.SET_COOKIE, response.refreshCookie().toString())
                              .body(response.authResponse());
     }
 
     @PostMapping(value = APIConstant.LOGOUT)
     public ResponseEntity<Void> logout() {
-        return ResponseEntity.noContent()
-                             .header(HttpHeaders.SET_COOKIE, authService.logout()
-                                                                        .toString())
-                             .build();
+        return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, authService.logout().toString()).build();
     }
+
+    @PostMapping(value = APIConstant.REFRESH_TOKEN)
+    public ResponseEntity<AuthResponse> refreshToken(
+            @CookieValue(name = APIConstant.REFRESH_TOKEN_NAME) String refreshToken
+    ) {
+
+        var response = authService.refreshToken(refreshToken);
+
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, refreshToken).body(response);
+    }
+
 }

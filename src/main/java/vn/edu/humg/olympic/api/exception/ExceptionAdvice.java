@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -42,8 +43,15 @@ public class ExceptionAdvice {
     public ResponseEntity<ErrorResponse> handleMissingParameterException(
             final MissingServletRequestParameterException e
     ) {
-        final var errorResponse = new ErrorResponse(e.getMessage(), 400, e.getParameterName()
-                                                                          .concat("_required"));
+        final var errorResponse = new ErrorResponse(e.getMessage(), 400, e.getParameterName().concat("_required"));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MissingRequestCookieException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestCookieException(
+            final MissingRequestCookieException e
+    ) {
+        final var errorResponse = new ErrorResponse("Refresh token is missing.", 400, "MissingRefreshToken");
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -52,9 +60,7 @@ public class ExceptionAdvice {
             final MethodArgumentNotValidException e
     ) {
         try {
-            String missingField = Objects.requireNonNull(e.getBindingResult()
-                                                          .getFieldError())
-                                         .getField();
+            String missingField = Objects.requireNonNull(e.getBindingResult().getFieldError()).getField();
             var errorResponse = new ErrorResponse("The required parameter is missing", 400,
                                                   missingField.concat("_required"));
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
