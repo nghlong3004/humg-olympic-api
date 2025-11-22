@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,8 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final UserConverter userConverter;
 
+    private final UserDetailsService userDetailsService;
+
     private final PasswordEncoder passwordEncoder;
 
     private final AuthenticationManager authenticationManager;
@@ -38,8 +41,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Value("${application.security.jwt.refresh-expiration}")
     private int refreshExpirationMinutes;
-    @Value("${application.security.jwt.refresh-name}")
-    private String name;
     @Value("${application.security.cookie.secure}")
     private boolean cookieSecure;
     @Value("${application.security.cookie.same-site}")
@@ -48,12 +49,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void register(RegisterRequest request) {
-        String normalizedEmail = request.email()
-                                        .toLowerCase();
-        userRepository.findByEmail(normalizedEmail)
-                      .ifPresent(e -> {
-                          throw new ResourceException(ErrorCode.EMAIL_ALREADY);
-                      });
+        String normalizedEmail = request.email().toLowerCase();
+        userRepository.findByEmail(normalizedEmail).ifPresent(e -> {
+            throw new ResourceException(ErrorCode.EMAIL_ALREADY);
+        });
 
         User user = userConverter.from(request);
         user.setEmail(normalizedEmail);
@@ -74,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = tokenService.generateAccessToken(authentication);
         String refreshToken = tokenService.generateRefreshToken(authentication);
 
-        ResponseCookie refreshCookie = ResponseCookie.from(name, refreshToken)
+        ResponseCookie refreshCookie = ResponseCookie.from(APIConstant.REFRESH_TOKEN_NAME, refreshToken)
                                                      .httpOnly(true)
                                                      .secure(cookieSecure)
                                                      .path(APIConstant.API_AUTH_PATH)
@@ -88,13 +87,24 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ResponseCookie logout() {
 
-        return ResponseCookie.from(name, "")
+        return ResponseCookie.from(APIConstant.REFRESH_TOKEN_NAME, "")
                              .httpOnly(true)
                              .secure(cookieSecure)
                              .path(APIConstant.API_AUTH_PATH)
                              .maxAge(0)
                              .sameSite(sameSite)
                              .build();
+    }
+
+    @Override
+    public AuthResponse refreshToken(String refreshToken) {
+        tokenService.validateRefreshToken(refreshToken);
+        String username = tokenService.getUsernameFromToken(refreshToken);
+        var userDetails = userDetailsService.loadUserByUsername(username);
+        var authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        String newAccessToken = tokenService.generateAccessToken(authentication);
+
+        return new AuthResponse(newAccessToken);
     }
 
 }

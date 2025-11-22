@@ -10,8 +10,8 @@ public interface TokenService {
 
     String getUsernameFromToken(String token);
 
-    boolean validateAccessToken(String token);
+    void validateAccessToken(String token);
 
-    boolean validateRefreshToken(String token);
+    void validateRefreshToken(String token);
 
 }
