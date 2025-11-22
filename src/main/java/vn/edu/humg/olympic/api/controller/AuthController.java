@@ -33,8 +33,7 @@ public class AuthController {
         authService.register(request);
     }
 
-    @PostMapping(value = APIConstant.LOGIN, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.OK)
+    @PostMapping(value = APIConstant.LOGIN)
     public ResponseEntity<AuthResponse> login(
             @Valid
             @RequestBody
@@ -46,5 +45,13 @@ public class AuthController {
                              .header(HttpHeaders.SET_COOKIE, response.refreshCookie()
                                                                      .toString())
                              .body(response.authResponse());
+    }
+
+    @PostMapping(value = APIConstant.LOGOUT, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.noContent()
+                             .header(HttpHeaders.SET_COOKIE, authService.logout()
+                                                                        .toString())
+                             .build();
     }
 }

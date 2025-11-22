@@ -32,11 +32,10 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
 
             .formLogin(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(
-                    auth -> auth.requestMatchers(APIConstant.API_REGISTER_PATH, APIConstant.API_LOGIN_PATH)
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated())
+            .authorizeHttpRequests(auth -> auth.requestMatchers(APIConstant.API_AUTH_PATHS)
+                                               .permitAll()
+                                               .anyRequest()
+                                               .authenticated())
             .oauth2ResourceServer(
                     oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
 
