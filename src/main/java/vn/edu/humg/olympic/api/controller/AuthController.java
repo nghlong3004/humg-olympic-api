@@ -59,7 +59,7 @@ public class AuthController {
 
         var response = authService.refreshToken(refreshToken);
 
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, refreshToken).body(response);
+        return ResponseEntity.ok().body(response);
     }
 
 }

@@ -89,7 +89,7 @@ public class TokenServiceImpl implements TokenService {
             }
 
         } catch (JwtValidationException ex) {
-            if (ex.getMessage().contains("Jwt expired") || ex.getMessage().contains("expired")) {
+            if (ex.getMessage().contains("expired")) {
                 ErrorCode errorCode =
                         expectedType.equals(APIConstant.ACCESS_TOKEN_NAME) ? ErrorCode.ACCESS_TOKEN_EXPIRED
                                                                            : ErrorCode.REFRESH_TOKEN_EXPIRED;
