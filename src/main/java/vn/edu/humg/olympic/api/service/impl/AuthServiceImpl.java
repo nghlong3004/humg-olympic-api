@@ -85,4 +85,16 @@ public class AuthServiceImpl implements AuthService {
         return new LoginResponse(refreshCookie, new AuthResponse(accessToken));
     }
 
+    @Override
+    public ResponseCookie logout() {
+
+        return ResponseCookie.from(name, "")
+                             .httpOnly(true)
+                             .secure(cookieSecure)
+                             .path(APIConstant.API_AUTH_PATH)
+                             .maxAge(0)
+                             .sameSite(sameSite)
+                             .build();
+    }
+
 }

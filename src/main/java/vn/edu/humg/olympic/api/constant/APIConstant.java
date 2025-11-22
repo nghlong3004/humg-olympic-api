@@ -11,9 +11,10 @@ public final class APIConstant {
 
     public static final String LOGIN = "/login";
 
-    public static final String API_REGISTER_PATH = API_AUTH_PATH + REGISTER;
+    public static final String LOGOUT = "/logout";
 
-    public static final String API_LOGIN_PATH = API_AUTH_PATH + LOGIN;
+    public static final String[] API_AUTH_PATHS = {API_AUTH_PATH + REGISTER, API_AUTH_PATH + LOGIN,
+            API_AUTH_PATH + LOGOUT};
 
     private APIConstant() {
         throw new UnsupportedOperationException("This class should never be instantiated");

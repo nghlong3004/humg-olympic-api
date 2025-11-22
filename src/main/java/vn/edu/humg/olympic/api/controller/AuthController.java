@@ -34,7 +34,6 @@ public class AuthController {
     }
 
     @PostMapping(value = APIConstant.LOGIN, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<AuthResponse> login(
             @Valid
             @RequestBody
@@ -46,5 +45,13 @@ public class AuthController {
                              .header(HttpHeaders.SET_COOKIE, response.refreshCookie()
                                                                      .toString())
                              .body(response.authResponse());
+    }
+
+    @PostMapping(value = APIConstant.LOGOUT)
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.noContent()
+                             .header(HttpHeaders.SET_COOKIE, authService.logout()
+                                                                        .toString())
+                             .build();
     }
 }
