@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Properties>
+        <Property name="LOG_PATTERN">%d{DEFAULT_PERIOD}[%-5level][%equals{%X{trace_id}}{}{}][%class{20}] : %msg%ex%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="ACCESS_LOGGER" level="INFO"/>
+        <Logger name="ERROR_LOGGER" level="ERROR" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <Root level="DEBUG">
+            <AppenderRef ref="Console"/>
+        </Root>
+        <Logger name="com.samsung" level="DEBUG"/>
+        <Logger name="org.springframework.aop" level="INFO"/>
+        <Logger name="org.springframework.beans" level="INFO"/>
+        <Logger name="org.springframework.boot" level="INFO"/>
+        <Logger name="org.springframework.context" level="INFO"/>
+        <Logger name="org.springframework.cloud" level="INFO"/>
+        <Logger name="org.springframework.core" level="INFO"/>
+        <Logger name="org.springframework.data" level="INFO"/>
+        <Logger name="org.springframework.jmx" level="INFO"/>
+        <Logger name="org.springframework.security" level="INFO"/>
+        <Logger name="org.springframework.server" level="INFO"/>
+        <Logger name="org.springframework.web" level="DEBUG"/>
+        <Logger name="org.springframework.web.reactive" level="INFO"/>
+        <Logger name="org.hibernate" level="INFO"/>
+        <Logger name="springfox" level="INFO"/>
+        <Logger name="software.amazon" level="INFO"/>
+        <Logger name="reactor" level="INFO"/>
+        <Logger name="io.netty" level="INFO"/>
+        <Logger name="org.apache" level="INFO"/>
+        <Logger name="sun.util.logging" level="INFO"/>
+        <Logger name="com.github.dockerjava" level="INFO"/>
+    </Loggers>
+</Configuration>
