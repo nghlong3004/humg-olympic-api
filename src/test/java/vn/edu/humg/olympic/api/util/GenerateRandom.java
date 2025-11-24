@@ -1,5 +1,6 @@
 package vn.edu.humg.olympic.api.util;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -28,7 +29,7 @@ public final class GenerateRandom {
     String characters = "abcdefghijklmnopqrstuvwxyz";
     StringBuilder password = new StringBuilder();
 
-    int usernameLength = random.nextInt(number) + 1;
+    int usernameLength = random.nextInt(number) + 3;
     for (int i = 0; i < usernameLength; i++) {
       password.append(characters.charAt(random.nextInt(characters.length())));
     }
@@ -77,5 +78,9 @@ public final class GenerateRandom {
     long endEpochSecond = endExclusive.toEpochSecond(java.time.ZoneOffset.UTC);
     long randomEpochSecond = ThreadLocalRandom.current().nextLong(startEpochSecond, endEpochSecond);
     return LocalDateTime.ofEpochSecond(randomEpochSecond, 0, java.time.ZoneOffset.UTC);
+  }
+
+  public static Timestamp generateRandomTimestamp() {
+    return Timestamp.valueOf(generateRandomLocalDateTime());
   }
 }
