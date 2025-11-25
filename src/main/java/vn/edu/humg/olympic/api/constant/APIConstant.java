@@ -26,6 +26,8 @@ public final class APIConstant {
   public static final String ASSIGNMENT_CREATE = "";
   public static final String ASSIGNMENT_LIST = "";
   public static final String ASSIGNMENT_SEARCH = "/search";
+  public static final String ASSIGNMENT_UPDATE = "";
+  public static final String ASSIGNMENT_DELETE = "/{id}";
 
   private APIConstant() {
     throw new UnsupportedOperationException("This class should never be instantiated");

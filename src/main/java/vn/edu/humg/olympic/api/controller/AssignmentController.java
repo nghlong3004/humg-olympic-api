@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.humg.olympic.api.constant.APIConstant;
 import vn.edu.humg.olympic.api.model.request.AssignmentRequest;
+import vn.edu.humg.olympic.api.model.request.AssignmentUpdateRequest;
 import vn.edu.humg.olympic.api.model.response.AssignmentResponse;
 import vn.edu.humg.olympic.api.model.response.PageResponse;
 import vn.edu.humg.olympic.api.service.AssignmentService;
@@ -25,16 +26,30 @@ public class AssignmentController {
   }
 
   @GetMapping(value = APIConstant.ASSIGNMENT_LIST, produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseStatus(HttpStatus.OK)
   public PageResponse<AssignmentResponse> list(
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
     return assignmentService.list(page, size);
   }
 
   @GetMapping(value = APIConstant.ASSIGNMENT_SEARCH, produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseStatus(HttpStatus.OK)
   public PageResponse<AssignmentResponse> searchByTitle(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam String keyword) {
     return assignmentService.searchByTitle(page, size, keyword);
+  }
+
+  @PutMapping(value = APIConstant.ASSIGNMENT_UPDATE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseStatus(HttpStatus.OK)
+  public void update(@Valid @RequestBody AssignmentUpdateRequest request) {
+    assignmentService.update(request);
+  }
+
+  @DeleteMapping(value = APIConstant.ASSIGNMENT_DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable Long id) {
+    assignmentService.delete(id);
   }
 }

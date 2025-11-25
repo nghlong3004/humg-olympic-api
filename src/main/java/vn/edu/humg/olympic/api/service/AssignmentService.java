@@ -13,4 +13,6 @@ public interface AssignmentService {
   PageResponse<AssignmentResponse> searchByTitle(int page, int size, String keyword);
 
   void update(AssignmentUpdateRequest request);
+
+  void delete(Long id);
 }

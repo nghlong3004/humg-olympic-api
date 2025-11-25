@@ -131,6 +131,22 @@ public class AssignmentServiceImpl implements AssignmentService {
     assignmentRepository.update(assignment);
   }
 
+  @Override
+  public void delete(Long id) {
+    var assignment = findAssignmentOrThrow(id);
+    var currentUser = userService.getCurrentUser();
+    log.debug(
+        "user by userId:{} delete assignment title:{} by id: {}",
+        currentUser.getId(),
+        assignment.getTitle(),
+        id);
+
+    validateOwnershipOrAdmin(assignment, currentUser);
+    validateAssignmentIsActive(assignment);
+
+    assignmentRepository.delete(id);
+  }
+
   private Assignment findAssignmentOrThrow(Long id) {
     return assignmentRepository
         .findById(id)

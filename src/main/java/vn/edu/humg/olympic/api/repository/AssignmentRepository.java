@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import vn.edu.humg.olympic.api.model.Assignment;
 
 @Mapper
@@ -38,6 +39,7 @@ public interface AssignmentRepository {
             created,
             updated
         FROM assignment
+        WHERE is_active = true
         ORDER BY updated DESC
         LIMIT #{limit} OFFSET #{offset}
         """)
@@ -47,6 +49,7 @@ public interface AssignmentRepository {
       """
         SELECT COUNT(*)
         FROM assignment
+        WHERE is_active = true
         """)
   long countAll();
 
@@ -64,7 +67,7 @@ public interface AssignmentRepository {
             created,
             updated
         FROM assignment
-        WHERE LOWER(title) LIKE LOWER(#{pattern})
+        WHERE LOWER(title) LIKE LOWER(#{pattern}) AND is_active = true
         ORDER BY updated DESC
         LIMIT #{limit} OFFSET #{offset}
         """)
@@ -74,7 +77,7 @@ public interface AssignmentRepository {
       """
         SELECT COUNT(*)
         FROM assignment
-        WHERE LOWER(title) LIKE LOWER(#{pattern})
+        WHERE LOWER(title) LIKE LOWER(#{pattern}) AND is_active = true
         """)
   long countByTitle(String pattern);
 
@@ -109,4 +112,11 @@ public interface AssignmentRepository {
             WHERE id = #{id}
           """)
   void update(Assignment assignment);
+
+  @Update(
+      """
+        DELETE FROM assignment
+        WHERE id = #{id}
+        """)
+  void delete(Long id);
 }
