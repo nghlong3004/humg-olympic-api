@@ -13,7 +13,7 @@ import vn.edu.humg.olympic.api.constant.APIConstant;
 import vn.edu.humg.olympic.api.constant.JwtConstant;
 import vn.edu.humg.olympic.api.exception.ErrorCode;
 import vn.edu.humg.olympic.api.exception.ResourceException;
-import vn.edu.humg.olympic.api.model.CustomUserDetails;
+import vn.edu.humg.olympic.api.model.AuthenticatedUser;
 import vn.edu.humg.olympic.api.service.TokenService;
 
 @Slf4j
@@ -63,9 +63,9 @@ public class TokenServiceImpl implements TokenService {
 
   private String generateToken(Authentication authentication, int expirationMinutes, String type) {
     Instant now = Instant.now();
-    var principal = (CustomUserDetails) authentication.getPrincipal();
+    var principal = (AuthenticatedUser) authentication.getPrincipal();
     Long userId = principal.getId();
-    String scope = principal.getRole();
+    String scope = principal.getAuthority();
 
     String username = authentication.getName();
 

@@ -8,7 +8,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import vn.edu.humg.olympic.api.constant.JwtConstant;
-import vn.edu.humg.olympic.api.model.CustomUserDetails;
+import vn.edu.humg.olympic.api.model.AuthenticatedUser;
 import vn.edu.humg.olympic.api.service.UserService;
 
 @Slf4j
@@ -16,7 +16,7 @@ import vn.edu.humg.olympic.api.service.UserService;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
   @Override
-  public CustomUserDetails getCurrentUser() {
+  public AuthenticatedUser getCurrentUser() {
     var authentication = SecurityContextHolder.getContext().getAuthentication();
     var jwt = (Jwt) authentication.getPrincipal();
     Long id = jwt.getClaim(JwtConstant.USER_ID);
@@ -24,6 +24,6 @@ public class UserServiceImpl implements UserService {
     String role = jwt.getClaimAsString(JwtConstant.SCOPE);
     var authorities = List.of(new SimpleGrantedAuthority(role));
     log.info("Get current user -> id:{}, username:{}, role:{}", id, username, role);
-    return CustomUserDetails.builder().id(id).username(username).authorities(authorities).build();
+    return AuthenticatedUser.builder().id(id).username(username).authorities(authorities).build();
   }
 }

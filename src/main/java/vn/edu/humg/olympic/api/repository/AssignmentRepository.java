@@ -1,6 +1,7 @@
 package vn.edu.humg.olympic.api.repository;
 
 import java.util.List;
+import java.util.Optional;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
@@ -63,17 +64,49 @@ public interface AssignmentRepository {
             created,
             updated
         FROM assignment
-        WHERE LOWER(title) LIKE CONCAT('%', LOWER(#{keyword}), '%')
+        WHERE LOWER(title) LIKE LOWER(#{pattern})
         ORDER BY updated DESC
         LIMIT #{limit} OFFSET #{offset}
         """)
-  List<Assignment> searchByTitlePaging(int offset, int limit, String keyword);
+  List<Assignment> searchByTitlePaging(int offset, int limit, String pattern);
 
   @Select(
       """
         SELECT COUNT(*)
         FROM assignment
-        WHERE LOWER(title) LIKE CONCAT('%', LOWER(#{keyword}), '%')
+        WHERE LOWER(title) LIKE LOWER(#{pattern})
         """)
-  long countByTitle(String keyword);
+  long countByTitle(String pattern);
+
+  @Select(
+      """
+        SELECT
+            id,
+            title,
+            description,
+            subject_name,
+            owner_id,
+            start_time,
+            end_time,
+            is_active,
+            created,
+            updated
+        FROM assignment
+        WHERE id = #{id}
+        """)
+  Optional<Assignment> findById(Long id);
+
+  @Insert(
+      """
+            UPDATE assignment
+            SET
+                title = #{title},
+                owner_id = #{ownerId},
+                description = #{description},
+                subject_name = #{subjectName},
+                start_time = #{startTime},
+                end_time = #{endTime}
+            WHERE id = #{id}
+          """)
+  void update(Assignment assignment);
 }

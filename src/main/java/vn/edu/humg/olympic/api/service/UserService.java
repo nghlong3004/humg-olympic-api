@@ -1,7 +1,7 @@
 package vn.edu.humg.olympic.api.service;
 
-import vn.edu.humg.olympic.api.model.CustomUserDetails;
+import vn.edu.humg.olympic.api.model.AuthenticatedUser;
 
 public interface UserService {
-  CustomUserDetails getCurrentUser();
+  AuthenticatedUser getCurrentUser();
 }
