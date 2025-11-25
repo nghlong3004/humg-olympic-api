@@ -556,4 +556,167 @@ class AssignmentServiceImplTest {
     assertEquals(ErrorCode.INVALID_REQUEST, ex.getErrorCode());
     verify(assignmentRepository, never()).update(any());
   }
+
+  @Test
+  void delete_shouldDeleteAssignment_whenOwnerAndActive() {
+    long assignmentId = GenerateRandom.generateNumber(1_000_000);
+    long ownerId = GenerateRandom.generateNumber(1_000_000);
+
+    Timestamp[] range = generateValidTimeRange();
+
+    Assignment assignment =
+        Assignment.builder()
+            .id(assignmentId)
+            .title(GenerateRandom.generateRandomText(20))
+            .description(GenerateRandom.generateRandomText(40))
+            .subjectName(GenerateRandom.generateRandomText(10))
+            .ownerId(ownerId)
+            .startTime(range[0])
+            .endTime(range[1])
+            .isActive(true)
+            .build();
+
+    when(assignmentRepository.findById(assignmentId)).thenReturn(java.util.Optional.of(assignment));
+
+    var authorities = List.of(new SimpleGrantedAuthority(Role.TEACHER.getAuthority()));
+    var currentUser =
+        AuthenticatedUser.builder()
+            .id(ownerId)
+            .username(GenerateRandom.generateRandomText())
+            .authorities(authorities)
+            .build();
+
+    when(userService.getCurrentUser()).thenReturn(currentUser);
+
+    assignmentService.delete(assignmentId);
+
+    verify(assignmentRepository, times(1)).delete(assignmentId);
+  }
+
+  @Test
+  void delete_shouldAllowAdminToDelete_whenAdminNotOwnerAndActive() {
+    long assignmentId = GenerateRandom.generateNumber(1_000_000);
+    long ownerId = GenerateRandom.generateNumber(1_000_000);
+    long adminId = ownerId + 123;
+
+    Timestamp[] range = generateValidTimeRange();
+
+    Assignment assignment =
+        Assignment.builder()
+            .id(assignmentId)
+            .title(GenerateRandom.generateRandomText(20))
+            .description(GenerateRandom.generateRandomText(40))
+            .subjectName(GenerateRandom.generateRandomText(10))
+            .ownerId(ownerId)
+            .startTime(range[0])
+            .endTime(range[1])
+            .isActive(true)
+            .build();
+
+    when(assignmentRepository.findById(assignmentId)).thenReturn(java.util.Optional.of(assignment));
+
+    var authorities = List.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority()));
+    var currentUser =
+        AuthenticatedUser.builder()
+            .id(adminId)
+            .username(GenerateRandom.generateRandomText())
+            .authorities(authorities)
+            .build();
+
+    when(userService.getCurrentUser()).thenReturn(currentUser);
+
+    assignmentService.delete(assignmentId);
+
+    verify(assignmentRepository, times(1)).delete(assignmentId);
+  }
+
+  @Test
+  void delete_shouldThrowNotFound_whenAssignmentDoesNotExist() {
+    long assignmentId = GenerateRandom.generateNumber(1_000_000);
+
+    when(assignmentRepository.findById(assignmentId)).thenReturn(java.util.Optional.empty());
+
+    ResourceException ex =
+        assertThrows(ResourceException.class, () -> assignmentService.delete(assignmentId));
+
+    assertEquals(ErrorCode.NOT_FOUND, ex.getErrorCode());
+    verify(assignmentRepository, never()).delete(anyLong());
+  }
+
+  @Test
+  void delete_shouldThrowForbidden_whenCurrentUserIsNotOwnerOrAdmin() {
+    long assignmentId = GenerateRandom.generateNumber(1_000_000);
+    long ownerId = GenerateRandom.generateNumber(1_000_000);
+    long otherUserId = ownerId + 999;
+
+    Timestamp[] range = generateValidTimeRange();
+
+    Assignment assignment =
+        Assignment.builder()
+            .id(assignmentId)
+            .title(GenerateRandom.generateRandomText(20))
+            .description(GenerateRandom.generateRandomText(40))
+            .subjectName(GenerateRandom.generateRandomText(10))
+            .ownerId(ownerId)
+            .startTime(range[0])
+            .endTime(range[1])
+            .isActive(true)
+            .build();
+
+    when(assignmentRepository.findById(assignmentId)).thenReturn(java.util.Optional.of(assignment));
+
+    var authorities = List.of(new SimpleGrantedAuthority(Role.TEACHER.getAuthority()));
+    var currentUser =
+        AuthenticatedUser.builder()
+            .id(otherUserId)
+            .username(GenerateRandom.generateRandomText())
+            .authorities(authorities)
+            .build();
+
+    when(userService.getCurrentUser()).thenReturn(currentUser);
+
+    ResourceException ex =
+        assertThrows(ResourceException.class, () -> assignmentService.delete(assignmentId));
+
+    assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
+    verify(assignmentRepository, never()).delete(anyLong());
+  }
+
+  @Test
+  void delete_shouldThrowForbidden_whenAssignmentIsInactive() {
+    long assignmentId = GenerateRandom.generateNumber(1_000_000);
+    long ownerId = GenerateRandom.generateNumber(1_000_000);
+
+    Timestamp[] range = generateValidTimeRange();
+
+    Assignment assignment =
+        Assignment.builder()
+            .id(assignmentId)
+            .title(GenerateRandom.generateRandomText(20))
+            .description(GenerateRandom.generateRandomText(40))
+            .subjectName(GenerateRandom.generateRandomText(10))
+            .ownerId(ownerId)
+            .startTime(range[0])
+            .endTime(range[1])
+            .isActive(false)
+            .build();
+
+    when(assignmentRepository.findById(assignmentId)).thenReturn(java.util.Optional.of(assignment));
+
+    var authorities = List.of(new SimpleGrantedAuthority(Role.TEACHER.getAuthority()));
+    var currentUser =
+        AuthenticatedUser.builder()
+            .id(ownerId)
+            .username(GenerateRandom.generateRandomText())
+            .authorities(authorities)
+            .build();
+
+    when(userService.getCurrentUser()).thenReturn(currentUser);
+
+    ResourceException ex =
+        assertThrows(ResourceException.class, () -> assignmentService.delete(assignmentId));
+
+    assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
+    verify(assignmentRepository, never()).delete(anyLong());
+  }
 }

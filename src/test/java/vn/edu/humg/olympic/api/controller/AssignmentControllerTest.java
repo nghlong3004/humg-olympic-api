@@ -3,8 +3,7 @@ package vn.edu.humg.olympic.api.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static vn.edu.humg.olympic.api.util.GenerateRandom.*;
 
@@ -21,9 +20,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import vn.edu.humg.olympic.api.constant.APIConstant;
 import vn.edu.humg.olympic.api.filter.JwtAuthenticationFilter;
 import vn.edu.humg.olympic.api.model.request.AssignmentRequest;
+import vn.edu.humg.olympic.api.model.request.AssignmentUpdateRequest;
 import vn.edu.humg.olympic.api.model.response.AssignmentResponse;
 import vn.edu.humg.olympic.api.model.response.PageResponse;
 import vn.edu.humg.olympic.api.service.AssignmentService;
@@ -221,5 +222,45 @@ class AssignmentControllerTest {
         .andExpect(jsonPath("$.items").isArray());
 
     verify(assignmentService).searchByTitle(defaultPage, defaultSize, keyword);
+  }
+
+  @Test
+  void update_shouldReturnOkAndDelegateToService() throws Exception {
+    Long id = (long) generateNumber(1_000_000);
+
+    AssignmentUpdateRequest request =
+        new AssignmentUpdateRequest(
+            id,
+            generateRandomText(20),
+            generateRandomText(40),
+            generateRandomText(10),
+            generateRandomTimestamp(),
+            generateRandomTimestamp(),
+            true);
+
+    String json = objectMapper.writeValueAsString(request);
+
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.put(
+                    APIConstant.API_ASSIGNMENT_PATH + APIConstant.ASSIGNMENT_UPDATE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isOk());
+
+    verify(assignmentService).update(any(AssignmentUpdateRequest.class));
+  }
+
+  @Test
+  void delete_shouldReturnNoContentAndDelegateToService() throws Exception {
+    Long id = (long) generateNumber(1_000_000);
+
+    mockMvc
+        .perform(
+            delete(APIConstant.API_ASSIGNMENT_PATH + APIConstant.ASSIGNMENT_DELETE, id)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent());
+
+    verify(assignmentService).delete(id);
   }
 }
