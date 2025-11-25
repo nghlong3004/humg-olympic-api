@@ -63,7 +63,7 @@ class AssignmentControllerTest {
 
     mockMvc
         .perform(
-            post(APIConstant.API_ASSIGNMENT_PATH + APIConstant.ASSIGNMENT_CREATE)
+            post(APIConstant.API_ASSIGNMENT_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
         .andExpect(status().isCreated());
@@ -94,23 +94,23 @@ class AssignmentControllerTest {
             .items(List.of(assignment))
             .page(page)
             .size(size)
-            .totalItems(1L)
-            .totalPages(1)
+            .totalItem(1L)
+            .totalPage(1)
             .build();
 
     when(assignmentService.list(page, size)).thenReturn(response);
 
     mockMvc
         .perform(
-            get(APIConstant.API_ASSIGNMENT_PATH + APIConstant.ASSIGNMENT_LIST)
+            get(APIConstant.API_ASSIGNMENT_PATH)
                 .param("page", String.valueOf(page))
                 .param("size", String.valueOf(size)))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.page").value(page))
         .andExpect(jsonPath("$.size").value(size))
-        .andExpect(jsonPath("$.totalItems").value(1))
-        .andExpect(jsonPath("$.totalPages").value(1))
+        .andExpect(jsonPath("$.totalItem").value(1))
+        .andExpect(jsonPath("$.totalPage").value(1))
         .andExpect(jsonPath("$.items[0].id").value(1L));
 
     verify(assignmentService).list(page, size);
@@ -126,20 +126,20 @@ class AssignmentControllerTest {
             .items(List.of())
             .page(defaultPage)
             .size(defaultSize)
-            .totalItems(0L)
-            .totalPages(0)
+            .totalItem(0L)
+            .totalPage(0)
             .build();
 
     when(assignmentService.list(defaultPage, defaultSize)).thenReturn(response);
 
     mockMvc
-        .perform(get(APIConstant.API_ASSIGNMENT_PATH + APIConstant.ASSIGNMENT_LIST))
+        .perform(get(APIConstant.API_ASSIGNMENT_PATH))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.page").value(defaultPage))
         .andExpect(jsonPath("$.size").value(defaultSize))
-        .andExpect(jsonPath("$.totalItems").value(0))
-        .andExpect(jsonPath("$.totalPages").value(0))
+        .andExpect(jsonPath("$.totalItem").value(0))
+        .andExpect(jsonPath("$.totalPage").value(0))
         .andExpect(jsonPath("$.items").isArray());
 
     verify(assignmentService).list(defaultPage, defaultSize);
@@ -169,15 +169,15 @@ class AssignmentControllerTest {
             .items(List.of(assignment))
             .page(page)
             .size(size)
-            .totalItems(1L)
-            .totalPages(1)
+            .totalItem(1L)
+            .totalPage(1)
             .build();
 
-    when(assignmentService.searchByTitle(page, size, keyword)).thenReturn(response);
+    when(assignmentService.search(page, size, keyword)).thenReturn(response);
 
     mockMvc
         .perform(
-            get(APIConstant.API_ASSIGNMENT_PATH + APIConstant.ASSIGNMENT_SEARCH)
+            get(APIConstant.API_ASSIGNMENT_PATH + "/search")
                 .param("page", String.valueOf(page))
                 .param("size", String.valueOf(size))
                 .param("keyword", keyword))
@@ -185,11 +185,11 @@ class AssignmentControllerTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.page").value(page))
         .andExpect(jsonPath("$.size").value(size))
-        .andExpect(jsonPath("$.totalItems").value(1))
-        .andExpect(jsonPath("$.totalPages").value(1))
+        .andExpect(jsonPath("$.totalItem").value(1))
+        .andExpect(jsonPath("$.totalPage").value(1))
         .andExpect(jsonPath("$.items[0].id").value(2L));
 
-    verify(assignmentService).searchByTitle(page, size, keyword);
+    verify(assignmentService).search(page, size, keyword);
   }
 
   @Test
@@ -203,25 +203,23 @@ class AssignmentControllerTest {
             .items(List.of())
             .page(defaultPage)
             .size(defaultSize)
-            .totalItems(0L)
-            .totalPages(0)
+            .totalItem(0L)
+            .totalPage(0)
             .build();
 
-    when(assignmentService.searchByTitle(defaultPage, defaultSize, keyword)).thenReturn(response);
+    when(assignmentService.search(defaultPage, defaultSize, keyword)).thenReturn(response);
 
     mockMvc
-        .perform(
-            get(APIConstant.API_ASSIGNMENT_PATH + APIConstant.ASSIGNMENT_SEARCH)
-                .param("keyword", keyword))
+        .perform(get(APIConstant.API_ASSIGNMENT_PATH + "/search").param("keyword", keyword))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.page").value(defaultPage))
         .andExpect(jsonPath("$.size").value(defaultSize))
-        .andExpect(jsonPath("$.totalItems").value(0))
-        .andExpect(jsonPath("$.totalPages").value(0))
+        .andExpect(jsonPath("$.totalItem").value(0))
+        .andExpect(jsonPath("$.totalPage").value(0))
         .andExpect(jsonPath("$.items").isArray());
 
-    verify(assignmentService).searchByTitle(defaultPage, defaultSize, keyword);
+    verify(assignmentService).search(defaultPage, defaultSize, keyword);
   }
 
   @Test
@@ -242,8 +240,7 @@ class AssignmentControllerTest {
 
     mockMvc
         .perform(
-            MockMvcRequestBuilders.put(
-                    APIConstant.API_ASSIGNMENT_PATH + APIConstant.ASSIGNMENT_UPDATE)
+            MockMvcRequestBuilders.put(APIConstant.API_ASSIGNMENT_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
         .andExpect(status().isOk());
@@ -257,7 +254,7 @@ class AssignmentControllerTest {
 
     mockMvc
         .perform(
-            delete(APIConstant.API_ASSIGNMENT_PATH + APIConstant.ASSIGNMENT_DELETE, id)
+            delete(APIConstant.API_ASSIGNMENT_PATH + "/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
 

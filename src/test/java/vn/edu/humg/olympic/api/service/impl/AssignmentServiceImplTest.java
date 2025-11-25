@@ -133,7 +133,7 @@ class AssignmentServiceImplTest {
 
       long totalItems = GenerateRandom.generateNumber(200);
 
-      when(assignmentRepository.findAllPaging(offset, size)).thenReturn(assignments);
+      when(assignmentRepository.findAllAssignment(offset, size)).thenReturn(assignments);
       when(assignmentRepository.countAll()).thenReturn(totalItems);
 
       List<AssignmentResponse> responses =
@@ -162,12 +162,12 @@ class AssignmentServiceImplTest {
         assertNotNull(result);
         assertEquals(page, result.page());
         assertEquals(size, result.size());
-        assertEquals(totalItems, result.totalItems());
+        assertEquals(totalItems, result.totalItem());
         int expectedTotalPages = (int) Math.ceil((double) totalItems / size);
-        assertEquals(expectedTotalPages, result.totalPages());
+        assertEquals(expectedTotalPages, result.totalPage());
         assertEquals(responses.size(), result.items().size());
 
-        verify(assignmentRepository, times(1)).findAllPaging(offset, size);
+        verify(assignmentRepository, times(1)).findAllAssignment(offset, size);
         verify(assignmentRepository, times(1)).countAll();
 
         reset(assignmentRepository);
@@ -232,8 +232,9 @@ class AssignmentServiceImplTest {
 
       long totalItems = GenerateRandom.generateNumber(100);
       String pattern = "%" + keyword.trim() + "%";
-      when(assignmentRepository.searchByTitlePaging(offset, size, pattern)).thenReturn(assignments);
-      when(assignmentRepository.countByTitle(pattern)).thenReturn(totalItems);
+      when(assignmentRepository.findAllAssignmentByTitle(offset, size, pattern))
+          .thenReturn(assignments);
+      when(assignmentRepository.countAllAssignmentByTitle(pattern)).thenReturn(totalItems);
 
       List<AssignmentResponse> responses =
           assignments.stream()
@@ -256,19 +257,18 @@ class AssignmentServiceImplTest {
       try (MockedStatic<AssignmentConverter> mocked = mockStatic(AssignmentConverter.class)) {
         mocked.when(() -> AssignmentConverter.to(assignments)).thenReturn(responses);
 
-        PageResponse<AssignmentResponse> result =
-            assignmentService.searchByTitle(page, size, keyword);
+        PageResponse<AssignmentResponse> result = assignmentService.search(page, size, keyword);
 
         assertNotNull(result);
         assertEquals(page, result.page());
         assertEquals(size, result.size());
-        assertEquals(totalItems, result.totalItems());
+        assertEquals(totalItems, result.totalItem());
         int expectedTotalPages = (int) Math.ceil((double) totalItems / size);
-        assertEquals(expectedTotalPages, result.totalPages());
+        assertEquals(expectedTotalPages, result.totalPage());
         assertEquals(responses.size(), result.items().size());
 
-        verify(assignmentRepository, times(1)).searchByTitlePaging(offset, size, pattern);
-        verify(assignmentRepository, times(1)).countByTitle(pattern);
+        verify(assignmentRepository, times(1)).findAllAssignmentByTitle(offset, size, pattern);
+        verify(assignmentRepository, times(1)).countAllAssignmentByTitle(pattern);
 
         reset(assignmentRepository);
       }
@@ -281,13 +281,11 @@ class AssignmentServiceImplTest {
     int size = GenerateRandom.generateNumber(20);
 
     ResourceException ex1 =
-        assertThrows(
-            ResourceException.class, () -> assignmentService.searchByTitle(page, size, null));
+        assertThrows(ResourceException.class, () -> assignmentService.search(page, size, null));
     assertEquals(ErrorCode.INVALID_REQUEST, ex1.getErrorCode());
 
     ResourceException ex2 =
-        assertThrows(
-            ResourceException.class, () -> assignmentService.searchByTitle(page, size, "   "));
+        assertThrows(ResourceException.class, () -> assignmentService.search(page, size, "   "));
     assertEquals(ErrorCode.INVALID_REQUEST, ex2.getErrorCode());
 
     verifyNoInteractions(assignmentRepository);
@@ -301,23 +299,20 @@ class AssignmentServiceImplTest {
     int invalidPage = -GenerateRandom.generateNumber(5);
     ResourceException ex1 =
         assertThrows(
-            ResourceException.class,
-            () -> assignmentService.searchByTitle(invalidPage, size, keyword));
+            ResourceException.class, () -> assignmentService.search(invalidPage, size, keyword));
     assertEquals(ErrorCode.INVALID_REQUEST, ex1.getErrorCode());
 
     int page = 0;
     int sizeZero = 0;
     ResourceException ex2 =
         assertThrows(
-            ResourceException.class,
-            () -> assignmentService.searchByTitle(page, sizeZero, keyword));
+            ResourceException.class, () -> assignmentService.search(page, sizeZero, keyword));
     assertEquals(ErrorCode.INVALID_REQUEST, ex2.getErrorCode());
 
     int sizeTooLarge = 20 + GenerateRandom.generateNumber(10);
     ResourceException ex3 =
         assertThrows(
-            ResourceException.class,
-            () -> assignmentService.searchByTitle(page, sizeTooLarge, keyword));
+            ResourceException.class, () -> assignmentService.search(page, sizeTooLarge, keyword));
     assertEquals(ErrorCode.INVALID_REQUEST, ex3.getErrorCode());
 
     verifyNoInteractions(assignmentRepository);

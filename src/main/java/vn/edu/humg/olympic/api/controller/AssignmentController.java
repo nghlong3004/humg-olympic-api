@@ -19,35 +19,35 @@ public class AssignmentController {
 
   private final AssignmentService assignmentService;
 
-  @PostMapping(value = APIConstant.ASSIGNMENT_CREATE, consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.CREATED)
   public void create(@Valid @RequestBody AssignmentRequest request) {
     assignmentService.create(request);
   }
 
-  @GetMapping(value = APIConstant.ASSIGNMENT_LIST, produces = MediaType.APPLICATION_JSON_VALUE)
+  @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.OK)
   public PageResponse<AssignmentResponse> list(
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
     return assignmentService.list(page, size);
   }
 
-  @GetMapping(value = APIConstant.ASSIGNMENT_SEARCH, produces = MediaType.APPLICATION_JSON_VALUE)
+  @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.OK)
-  public PageResponse<AssignmentResponse> searchByTitle(
+  public PageResponse<AssignmentResponse> search(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam String keyword) {
-    return assignmentService.searchByTitle(page, size, keyword);
+    return assignmentService.search(page, size, keyword);
   }
 
-  @PutMapping(value = APIConstant.ASSIGNMENT_UPDATE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.OK)
   public void update(@Valid @RequestBody AssignmentUpdateRequest request) {
     assignmentService.update(request);
   }
 
-  @DeleteMapping(value = APIConstant.ASSIGNMENT_DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable Long id) {
     assignmentService.delete(id);

@@ -76,7 +76,7 @@ class AssignmentRepositoryTest {
     long newCount = assignmentRepository.countAll();
     assertThat(newCount - oldCount).isEqualTo(toInsert);
 
-    List<Assignment> page = assignmentRepository.findAllPaging(0, (int) newCount);
+    List<Assignment> page = assignmentRepository.findAllAssignment(0, (int) newCount);
     assertThat(page).isNotEmpty();
   }
 
@@ -91,8 +91,8 @@ class AssignmentRepositoryTest {
 
     int pageSize = 3;
 
-    List<Assignment> firstPage = assignmentRepository.findAllPaging(0, pageSize);
-    List<Assignment> secondPage = assignmentRepository.findAllPaging(pageSize, pageSize);
+    List<Assignment> firstPage = assignmentRepository.findAllAssignment(0, pageSize);
+    List<Assignment> secondPage = assignmentRepository.findAllAssignment(pageSize, pageSize);
 
     assertThat(firstPage).hasSize(pageSize);
     assertThat(secondPage).hasSize(pageSize);
@@ -113,7 +113,7 @@ class AssignmentRepositoryTest {
     }
 
     long total = assignmentRepository.countAll();
-    List<Assignment> result = assignmentRepository.findAllPaging((int) total + 10, 10);
+    List<Assignment> result = assignmentRepository.findAllAssignment((int) total + 10, 10);
 
     assertThat(result).isEmpty();
   }
@@ -138,8 +138,8 @@ class AssignmentRepositoryTest {
       assignmentRepository.save(assignment);
     }
 
-    List<Assignment> found = assignmentRepository.searchByTitlePaging(0, 20, keyword);
-    long counted = assignmentRepository.countByTitle(keyword);
+    List<Assignment> found = assignmentRepository.findAllAssignmentByTitle(0, 20, keyword);
+    long counted = assignmentRepository.countAllAssignmentByTitle(keyword);
 
     assertThat(found.size()).isEqualTo(counted);
     assertThat(found).allMatch(a -> a.getTitle().toLowerCase().contains(keyword.toLowerCase()));
@@ -162,7 +162,8 @@ class AssignmentRepositoryTest {
     assignmentRepository.save(assignment1);
     assignmentRepository.save(assignment2);
 
-    List<Assignment> result = assignmentRepository.searchByTitlePaging(0, 10, "%" + keyword + "%");
+    List<Assignment> result =
+        assignmentRepository.findAllAssignmentByTitle(0, 10, "%" + keyword + "%");
 
     assertThat(result).hasSizeGreaterThanOrEqualTo(2);
     assertThat(result)
@@ -186,9 +187,9 @@ class AssignmentRepositoryTest {
     int pageSize = 3;
 
     List<Assignment> page1 =
-        assignmentRepository.searchByTitlePaging(0, pageSize, "%" + keyword + "%");
+        assignmentRepository.findAllAssignmentByTitle(0, pageSize, "%" + keyword + "%");
     List<Assignment> page2 =
-        assignmentRepository.searchByTitlePaging(pageSize, pageSize, "%" + keyword + "%");
+        assignmentRepository.findAllAssignmentByTitle(pageSize, pageSize, "%" + keyword + "%");
 
     assertThat(page1).hasSize(pageSize);
     assertThat(page2).hasSize(pageSize);
@@ -203,8 +204,8 @@ class AssignmentRepositoryTest {
   void searchByTitlePaging_shouldReturnEmpty_whenKeywordNotFound() {
     String notFoundKeyword = generateRandomText(12) + generateRandomText(12);
 
-    List<Assignment> result = assignmentRepository.searchByTitlePaging(0, 10, notFoundKeyword);
-    long count = assignmentRepository.countByTitle(notFoundKeyword);
+    List<Assignment> result = assignmentRepository.findAllAssignmentByTitle(0, 10, notFoundKeyword);
+    long count = assignmentRepository.countAllAssignmentByTitle(notFoundKeyword);
 
     assertThat(result).isEmpty();
     assertThat(count).isZero();
@@ -216,7 +217,8 @@ class AssignmentRepositoryTest {
 
     Assignment assignment = buildAssignment(owner);
     assignmentRepository.save(assignment);
-    assignment = assignmentRepository.searchByTitlePaging(0, 1, assignment.getTitle()).getFirst();
+    assignment =
+        assignmentRepository.findAllAssignmentByTitle(0, 1, assignment.getTitle()).getFirst();
     assertThat(assignment.getId()).isNotNull();
 
     var foundOpt = assignmentRepository.findById(assignment.getId());
@@ -250,7 +252,7 @@ class AssignmentRepositoryTest {
     assignmentRepository.save(assignment);
     assignment =
         assignmentRepository
-            .searchByTitlePaging(0, 1, "%" + assignment.getTitle() + "%")
+            .findAllAssignmentByTitle(0, 1, "%" + assignment.getTitle() + "%")
             .getFirst();
 
     Long id = assignment.getId();
@@ -290,7 +292,8 @@ class AssignmentRepositoryTest {
 
     Assignment assignment = buildAssignment(owner);
     assignmentRepository.save(assignment);
-    assignment = assignmentRepository.searchByTitlePaging(0, 1, assignment.getTitle()).getFirst();
+    assignment =
+        assignmentRepository.findAllAssignmentByTitle(0, 1, assignment.getTitle()).getFirst();
 
     Long id = assignment.getId();
     assertThat(id).isNotNull();

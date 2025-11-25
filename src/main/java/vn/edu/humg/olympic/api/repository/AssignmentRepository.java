@@ -27,23 +27,13 @@ public interface AssignmentRepository {
 
   @Select(
       """
-        SELECT
-            id,
-            title,
-            description,
-            subject_name,
-            owner_id,
-            start_time,
-            end_time,
-            is_active,
-            created,
-            updated
+        SELECT *
         FROM assignment
         WHERE is_active = true
         ORDER BY updated DESC
         LIMIT #{limit} OFFSET #{offset}
         """)
-  List<Assignment> findAllPaging(int offset, int limit);
+  List<Assignment> findAllAssignment(int offset, int limit);
 
   @Select(
       """
@@ -55,23 +45,13 @@ public interface AssignmentRepository {
 
   @Select(
       """
-        SELECT
-            id,
-            title,
-            description,
-            subject_name,
-            owner_id,
-            start_time,
-            end_time,
-            is_active,
-            created,
-            updated
+        SELECT *
         FROM assignment
         WHERE LOWER(title) LIKE LOWER(#{pattern}) AND is_active = true
         ORDER BY updated DESC
         LIMIT #{limit} OFFSET #{offset}
         """)
-  List<Assignment> searchByTitlePaging(int offset, int limit, String pattern);
+  List<Assignment> findAllAssignmentByTitle(int offset, int limit, String pattern);
 
   @Select(
       """
@@ -79,21 +59,11 @@ public interface AssignmentRepository {
         FROM assignment
         WHERE LOWER(title) LIKE LOWER(#{pattern}) AND is_active = true
         """)
-  long countByTitle(String pattern);
+  long countAllAssignmentByTitle(String pattern);
 
   @Select(
       """
-        SELECT
-            id,
-            title,
-            description,
-            subject_name,
-            owner_id,
-            start_time,
-            end_time,
-            is_active,
-            created,
-            updated
+        SELECT *
         FROM assignment
         WHERE id = #{id}
         """)

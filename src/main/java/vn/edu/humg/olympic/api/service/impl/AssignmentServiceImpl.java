@@ -58,7 +58,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     int offset = page * size;
 
-    var assignments = assignmentRepository.findAllPaging(offset, size);
+    var assignments = assignmentRepository.findAllAssignment(offset, size);
     long totalItems = assignmentRepository.countAll();
     int totalPages = (int) Math.ceil((double) totalItems / size);
 
@@ -77,7 +77,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 
   @Override
   @Transactional(readOnly = true)
-  public PageResponse<AssignmentResponse> searchByTitle(int page, int size, String keyword) {
+  public PageResponse<AssignmentResponse> search(int page, int size, String keyword) {
     log.debug("Search assignments by title → page={}, size={}, keyword='{}'", page, size, keyword);
 
     validatePageAndSize(page, size);
@@ -89,8 +89,8 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     int offset = page * size;
     String pattern = "%" + keyword.trim() + "%";
-    var assignments = assignmentRepository.searchByTitlePaging(offset, size, pattern);
-    long totalItems = assignmentRepository.countByTitle(pattern);
+    var assignments = assignmentRepository.findAllAssignmentByTitle(offset, size, pattern);
+    long totalItems = assignmentRepository.countAllAssignmentByTitle(pattern);
     int totalPages = (int) Math.ceil((double) totalItems / size);
 
     log.info(
@@ -199,17 +199,17 @@ public class AssignmentServiceImpl implements AssignmentService {
     }
   }
 
-  private <T> PageResponse<T> buildPageResponse(
-      List<T> items, int page, int size, long totalItems) {
+  private PageResponse<AssignmentResponse> buildPageResponse(
+      List<AssignmentResponse> items, int page, int size, long totalItems) {
 
     int totalPages = (int) Math.ceil((double) totalItems / size);
 
-    return PageResponse.<T>builder()
+    return PageResponse.<AssignmentResponse>builder()
         .items(items)
         .page(page)
         .size(size)
-        .totalItems(totalItems)
-        .totalPages(totalPages)
+        .totalItem(totalItems)
+        .totalPage(totalPages)
         .build();
   }
 

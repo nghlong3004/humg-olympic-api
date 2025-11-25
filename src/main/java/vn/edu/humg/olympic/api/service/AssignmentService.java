@@ -10,7 +10,7 @@ public interface AssignmentService {
 
   PageResponse<AssignmentResponse> list(int page, int size);
 
-  PageResponse<AssignmentResponse> searchByTitle(int page, int size, String keyword);
+  PageResponse<AssignmentResponse> search(int page, int size, String keyword);
 
   void update(AssignmentUpdateRequest request);
 

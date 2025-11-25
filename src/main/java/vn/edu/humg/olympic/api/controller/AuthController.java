@@ -22,44 +22,36 @@ import vn.edu.humg.olympic.api.service.AuthService;
 @RequestMapping(APIConstant.API_AUTH_PATH)
 @RequiredArgsConstructor
 public class AuthController {
-    private final AuthService authService;
+  private final AuthService authService;
 
-    @PostMapping(value = APIConstant.REGISTER, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
-    public void register(
-            @Valid
-            @RequestBody
-            RegisterRequest request
-    ) {
-        authService.register(request);
-    }
+  @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
+  public void register(@Valid @RequestBody RegisterRequest request) {
+    authService.register(request);
+  }
 
-    @PostMapping(value = APIConstant.LOGIN, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<AuthResponse> login(
-            @Valid
-            @RequestBody
-            LoginRequest request
-    ) {
-        var response = authService.login(request);
+  @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    var response = authService.login(request);
 
-        return ResponseEntity.ok()
-                             .header(HttpHeaders.SET_COOKIE, response.refreshCookie().toString())
-                             .body(response.authResponse());
-    }
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE, response.refreshCookie().toString())
+        .body(response.authResponse());
+  }
 
-    @PostMapping(value = APIConstant.LOGOUT)
-    public ResponseEntity<Void> logout() {
-        return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, authService.logout().toString()).build();
-    }
+  @PostMapping(value = "/logout")
+  public ResponseEntity<Void> logout() {
+    return ResponseEntity.noContent()
+        .header(HttpHeaders.SET_COOKIE, authService.logout().toString())
+        .build();
+  }
 
-    @PostMapping(value = APIConstant.REFRESH_TOKEN)
-    public ResponseEntity<AuthResponse> refreshToken(
-            @CookieValue(name = APIConstant.REFRESH_TOKEN_NAME) String refreshToken
-    ) {
+  @PostMapping(value = "/refresh-token")
+  public ResponseEntity<AuthResponse> refreshToken(
+      @CookieValue(name = APIConstant.REFRESH_TOKEN_NAME) String refreshToken) {
 
-        var response = authService.refreshToken(refreshToken);
+    var response = authService.refreshToken(refreshToken);
 
-        return ResponseEntity.ok().body(response);
-    }
-
+    return ResponseEntity.ok().body(response);
+  }
 }
