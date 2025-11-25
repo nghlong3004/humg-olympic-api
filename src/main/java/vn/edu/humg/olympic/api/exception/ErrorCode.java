@@ -17,6 +17,9 @@ public enum ErrorCode {
 
   FORBIDDEN(HttpStatus.FORBIDDEN.value(), "Forbidden", "Access denied."),
 
+  INVALID_REQUEST(
+      HttpStatus.BAD_REQUEST.value(), "InvalidRequest", "The request parameters are invalid."),
+
   INVALID_ACCESS_TOKEN(
       HttpStatus.UNAUTHORIZED.value(), "InvalidAccessToken", "Access token is invalid."),
 
@@ -28,6 +31,7 @@ public enum ErrorCode {
 
   REFRESH_TOKEN_EXPIRED(
       HttpStatus.UNAUTHORIZED.value(), "RefreshTokenExpired", "Refresh token has expired."),
+
   // 5xx
   INTERNAL_ERROR(
       HttpStatus.INTERNAL_SERVER_ERROR.value(),

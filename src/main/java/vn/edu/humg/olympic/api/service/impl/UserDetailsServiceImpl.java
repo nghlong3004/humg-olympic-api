@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import vn.edu.humg.olympic.api.model.CustomUserDetails;
+import vn.edu.humg.olympic.api.model.AuthenticatedUser;
 import vn.edu.humg.olympic.api.repository.UserRepository;
 
 @Service
@@ -22,7 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             .findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Username not found!"));
     var authorities = List.of(new SimpleGrantedAuthority(user.getRole().getAuthority()));
-    return CustomUserDetails.builder()
+    return AuthenticatedUser.builder()
         .username(user.getEmail())
         .password(user.getPasswordHash())
         .id(user.getId())

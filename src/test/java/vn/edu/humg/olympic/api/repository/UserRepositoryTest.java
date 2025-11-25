@@ -31,8 +31,8 @@ class UserRepositoryTest {
 
       User user =
           User.builder()
-              .firstName(generateRandomText(25))
-              .lastName(generateRandomText(25))
+              .firstName(generateRandomText(24))
+              .lastName(generateRandomText(24))
               .email(email)
               .passwordHash(generateRandomText())
               .gender(generateGender())
