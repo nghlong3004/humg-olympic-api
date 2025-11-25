@@ -1,5 +1,6 @@
 package vn.edu.humg.olympic.api.service.impl;
 
+import io.micrometer.common.util.StringUtils;
 import java.sql.Timestamp;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -179,21 +180,26 @@ public class AssignmentServiceImpl implements AssignmentService {
   }
 
   private void applyUpdate(Assignment assignment, AssignmentUpdateRequest request) {
-    if (request.title() != null) {
+    if (StringUtils.isNotBlank(request.title())) {
       assignment.setTitle(request.title());
     }
-    if (request.description() != null) {
+
+    if (StringUtils.isNotBlank(request.description())) {
       assignment.setDescription(request.description());
     }
-    if (request.subjectName() != null) {
+
+    if (StringUtils.isNotBlank(request.subjectName())) {
       assignment.setSubjectName(request.subjectName());
     }
+
     if (request.startTime() != null) {
       assignment.setStartTime(request.startTime());
     }
+
     if (request.endTime() != null) {
       assignment.setEndTime(request.endTime());
     }
+
     if (request.isActive() != null) {
       assignment.setIsActive(request.isActive());
     }
