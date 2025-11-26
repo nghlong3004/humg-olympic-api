@@ -4,6 +4,8 @@ public final class APIConstant {
   private static final String COMMON_PATH = "/api";
   private static final String API_VERSION = "/v1";
   public static final String API_BASE_PATH = COMMON_PATH + API_VERSION;
+  // User
+  public static final String API_USER_PATH = API_BASE_PATH + "/user";
   // Assignment
   public static final String API_ASSIGNMENT_PATH = API_BASE_PATH + "/assignment";
   // Auth

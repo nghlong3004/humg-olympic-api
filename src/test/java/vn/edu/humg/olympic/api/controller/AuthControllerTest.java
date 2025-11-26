@@ -33,7 +33,7 @@ import vn.edu.humg.olympic.api.service.AuthService;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(
-    controllers = AuthControllerTest.class,
+    controllers = AuthController.class,
     excludeFilters = {
       @ComponentScan.Filter(
           type = FilterType.ASSIGNABLE_TYPE,

@@ -43,10 +43,14 @@ public final class GenerateRandom {
     return genders[random.nextInt(genders.length)];
   }
 
-  public static String generateRole() {
+  public static Role generateRole() {
     Random random = new Random();
     var roles = Role.values();
-    return roles[random.nextInt(roles.length)].getAuthority();
+    return roles[random.nextInt(roles.length)];
+  }
+
+  public static String generateAuthority() {
+    return generateRole().getAuthority();
   }
 
   public static String generateRandomVNPhoneNumber() {

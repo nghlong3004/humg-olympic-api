@@ -1,5 +1,9 @@
 package vn.edu.humg.olympic.api.config;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +26,8 @@ import vn.edu.humg.olympic.api.constant.APIConstant;
 import vn.edu.humg.olympic.api.filter.JwtAuthenticationFilter;
 import vn.edu.humg.olympic.api.model.Role;
 
+@SecurityScheme(name = "Bearer", type = SecuritySchemeType.HTTP, scheme = "bearer")
+@OpenAPIDefinition(security = {@SecurityRequirement(name = "Bearer")})
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -38,6 +44,8 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(APIConstant.API_AUTH_PATHS)
+                    .permitAll()
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
