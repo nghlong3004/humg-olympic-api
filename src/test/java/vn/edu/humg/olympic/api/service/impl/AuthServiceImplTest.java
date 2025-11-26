@@ -26,10 +26,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import vn.edu.humg.olympic.api.constant.APIConstant;
-import vn.edu.humg.olympic.api.converter.UserConverter;
 import vn.edu.humg.olympic.api.exception.ErrorCode;
 import vn.edu.humg.olympic.api.exception.ResourceException;
-import vn.edu.humg.olympic.api.model.Role;
 import vn.edu.humg.olympic.api.model.User;
 import vn.edu.humg.olympic.api.model.request.LoginRequest;
 import vn.edu.humg.olympic.api.model.request.RegisterRequest;
@@ -61,21 +59,6 @@ class AuthServiceImplTest {
       when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
 
       when(passwordEncoder.encode(request.password())).thenReturn(generateRandomText());
-      when(UserConverter.from(request))
-          .thenReturn(
-              User.builder()
-                  .firstName(request.firstName())
-                  .lastName(request.lastName())
-                  .email(request.email())
-                  .gender(request.gender())
-                  .birthday(request.birthday())
-                  .role(Role.STUDENT)
-                  .phone(request.phone())
-                  .universityName(request.universityName())
-                  .facultyName(request.facultyName())
-                  .avatarUrl(null)
-                  .isActive(true)
-                  .build());
       authService.register(request);
 
       var userCaptor = ArgumentCaptor.forClass(User.class);

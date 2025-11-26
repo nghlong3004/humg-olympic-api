@@ -3,7 +3,6 @@ package vn.edu.humg.olympic.api.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.humg.olympic.api.constant.APIConstant;
 import vn.edu.humg.olympic.api.model.response.UserResponse;
 import vn.edu.humg.olympic.api.service.UserService;
 
@@ -14,7 +13,7 @@ import vn.edu.humg.olympic.api.service.UserService;
  * @since 11/26/2025
  */
 @RestController
-@RequestMapping(APIConstant.API_USER_PATH)
+@RequestMapping("/api/v1/user")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -28,7 +27,7 @@ public class UserController {
 
   @GetMapping(value = "/{userId}")
   @ResponseStatus(HttpStatus.OK)
-  public UserResponse getMe(@PathVariable Long userId) {
+  public UserResponse getUser(@PathVariable Long userId) {
     return userService.getUser(userId);
   }
 }

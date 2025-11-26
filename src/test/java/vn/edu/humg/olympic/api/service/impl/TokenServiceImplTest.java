@@ -5,19 +5,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import static vn.edu.humg.olympic.api.util.GenerateRandom.*;
 
-import java.util.Collection;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.test.util.ReflectionTestUtils;
 import vn.edu.humg.olympic.api.constant.APIConstant;
 import vn.edu.humg.olympic.api.exception.ErrorCode;
 import vn.edu.humg.olympic.api.exception.ResourceException;
+import vn.edu.humg.olympic.api.model.AuthenticatedUser;
 
 @ExtendWith(MockitoExtension.class)
 class TokenServiceImplTest {
@@ -35,11 +36,17 @@ class TokenServiceImplTest {
       String username = generateRandomEmail();
       String role = generateAuthority();
       String tokenValue = generateRandomText();
+      AuthenticatedUser authenticatedUser =
+          AuthenticatedUser.builder()
+              .id((long) generateNumber(1_000_000))
+              .username(username)
+              .password(generateRandomText() + "000000")
+              .authorities(List.of(new SimpleGrantedAuthority(role)))
+              .build();
 
       Authentication authentication = mock(Authentication.class);
       when(authentication.getName()).thenReturn(username);
-      when(authentication.getAuthorities())
-          .thenReturn((Collection) AuthorityUtils.createAuthorityList(role));
+      when(authentication.getPrincipal()).thenReturn(authenticatedUser);
 
       ReflectionTestUtils.setField(tokenService, "accessExpirationMinutes", 60);
 
@@ -64,9 +71,15 @@ class TokenServiceImplTest {
       String tokenValue = generateRandomText();
 
       Authentication authentication = mock(Authentication.class);
+      AuthenticatedUser authenticatedUser =
+          AuthenticatedUser.builder()
+              .id((long) generateNumber(1_000_000))
+              .username(username)
+              .password(generateRandomText() + "000000")
+              .authorities(List.of(new SimpleGrantedAuthority(role)))
+              .build();
       when(authentication.getName()).thenReturn(username);
-      when(authentication.getAuthorities())
-          .thenReturn((Collection) AuthorityUtils.createAuthorityList(role));
+      when(authentication.getPrincipal()).thenReturn(authenticatedUser);
 
       ReflectionTestUtils.setField(tokenService, "refreshExpirationMinutes", 120);
 
