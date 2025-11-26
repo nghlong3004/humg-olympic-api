@@ -43,8 +43,6 @@ class AuthServiceImplTest {
 
   @Mock private UserRepository userRepository;
 
-  @Mock private UserConverter userConverter;
-
   @Mock private PasswordEncoder passwordEncoder;
 
   @Mock private AuthenticationManager authenticationManager;
@@ -63,7 +61,7 @@ class AuthServiceImplTest {
       when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
 
       when(passwordEncoder.encode(request.password())).thenReturn(generateRandomText());
-      when(userConverter.from(request))
+      when(UserConverter.from(request))
           .thenReturn(
               User.builder()
                   .firstName(request.firstName())
@@ -218,7 +216,7 @@ class AuthServiceImplTest {
       var userDetails =
           org.springframework.security.core.userdetails.User.withUsername(username)
               .password("")
-              .authorities(generateRole())
+              .authorities(generateAuthority())
               .build();
 
       when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);

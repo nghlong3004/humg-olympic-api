@@ -33,7 +33,7 @@ class TokenServiceImplTest {
     int n = generateNumber(15);
     for (int i = 0; i < n; ++i) {
       String username = generateRandomEmail();
-      String role = generateRole();
+      String role = generateAuthority();
       String tokenValue = generateRandomText();
 
       Authentication authentication = mock(Authentication.class);
@@ -60,7 +60,7 @@ class TokenServiceImplTest {
     int n = generateNumber(15);
     for (int i = 0; i < n; ++i) {
       String username = generateRandomEmail();
-      String role = generateRole();
+      String role = generateAuthority();
       String tokenValue = generateRandomText();
 
       Authentication authentication = mock(Authentication.class);
