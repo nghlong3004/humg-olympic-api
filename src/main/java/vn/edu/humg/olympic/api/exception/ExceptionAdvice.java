@@ -5,6 +5,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.oauth2.jwt.JwtValidationException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -43,6 +44,15 @@ public class ExceptionAdvice {
       final HttpMediaTypeNotSupportedException e) {
     final var code = "ContentTypeIsNotSupported";
     final var errorResponse = new ErrorResponse(e.getMessage(), 400, code);
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+      final HttpMessageNotReadableException e) {
+    log.debug(e.getMessage());
+    final var code = "JsonParseError";
+    final var errorResponse = new ErrorResponse("Cannot deserialize value of type", 400, code);
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 

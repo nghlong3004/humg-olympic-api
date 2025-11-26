@@ -1,14 +1,13 @@
 package vn.edu.humg.olympic.api.model;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.sql.Date;
 import java.sql.Timestamp;
+import lombok.*;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class User {
     private Long id;
