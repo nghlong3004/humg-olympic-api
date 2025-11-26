@@ -48,7 +48,7 @@ public class AuthController {
 
   @PostMapping(value = "/refresh-token")
   public ResponseEntity<AuthResponse> refreshToken(
-      @CookieValue(name = APIConstant.REFRESH_TOKEN_NAME) String refreshToken) {
+      @CookieValue(name = APIConstant.REFRESH_TOKEN_NAME, required = false) String refreshToken) {
 
     var response = authService.refreshToken(refreshToken);
 
