@@ -1,5 +1,7 @@
 package vn.edu.humg.olympic.api.converter;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import vn.edu.humg.olympic.api.model.Role;
 import vn.edu.humg.olympic.api.model.User;
 import vn.edu.humg.olympic.api.model.request.RegisterRequest;
@@ -37,5 +39,9 @@ public class UserConverter {
         .avatarUrl(user.getAvatarUrl())
         .created(user.getCreated())
         .build();
+  }
+
+  public static List<UserResponse> to(List<User> user) {
+    return user.stream().map(UserConverter::to).collect(Collectors.toList());
   }
 }

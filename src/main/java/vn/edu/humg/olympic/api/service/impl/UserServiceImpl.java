@@ -13,8 +13,10 @@ import vn.edu.humg.olympic.api.converter.UserConverter;
 import vn.edu.humg.olympic.api.exception.ErrorCode;
 import vn.edu.humg.olympic.api.exception.ResourceException;
 import vn.edu.humg.olympic.api.model.AuthenticatedUser;
+import vn.edu.humg.olympic.api.model.Role;
 import vn.edu.humg.olympic.api.model.User;
 import vn.edu.humg.olympic.api.model.request.UserUpdateRequest;
+import vn.edu.humg.olympic.api.model.response.PageResponse;
 import vn.edu.humg.olympic.api.model.response.UserResponse;
 import vn.edu.humg.olympic.api.repository.UserRepository;
 import vn.edu.humg.olympic.api.service.UserService;
@@ -71,6 +73,37 @@ public class UserServiceImpl implements UserService {
     log.debug(
         "Update user successfully for id{} -> id:{}", authenticatedUser.getId(), request.id());
     userRepository.update(user);
+  }
+
+  @Override
+  public PageResponse<UserResponse> search(int page, int size, String keyword, Role role) {
+    log.debug("Search user by keyword:{} and role:{}", keyword, role);
+
+    int offset = page * size;
+    keyword = "%" + keyword + "%";
+    String roleString = "%" + role.name() + "%";
+
+    int total = userRepository.countByKeywordAndRole(keyword, roleString);
+    if (total == 0) {
+      return buildPageResponse(List.of(), page, size, total);
+    }
+
+    var users = userRepository.search(offset, size, keyword, roleString);
+    return buildPageResponse(UserConverter.to(users), page, size, total);
+  }
+
+  private PageResponse<UserResponse> buildPageResponse(
+      List<UserResponse> items, int page, int size, long totalItems) {
+
+    int totalPages = (int) Math.ceil((double) totalItems / size);
+
+    return PageResponse.<UserResponse>builder()
+        .items(items)
+        .page(page)
+        .size(size)
+        .totalItem(totalItems)
+        .totalPage(totalPages)
+        .build();
   }
 
   private void applyUpdate(User user, UserUpdateRequest request) {
