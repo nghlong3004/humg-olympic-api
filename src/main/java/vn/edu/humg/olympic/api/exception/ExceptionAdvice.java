@@ -13,6 +13,7 @@ import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 @Slf4j
@@ -43,6 +44,14 @@ public class ExceptionAdvice {
   public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
       final HttpMediaTypeNotSupportedException e) {
     final var code = "ContentTypeIsNotSupported";
+    final var errorResponse = new ErrorResponse(e.getMessage(), 400, code);
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HandlerMethodValidationException.class)
+  public ResponseEntity<ErrorResponse> handlerMethodValidationException(
+      final HandlerMethodValidationException e) {
+    final var code = "ValidationFailure";
     final var errorResponse = new ErrorResponse(e.getMessage(), 400, code);
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }

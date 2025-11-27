@@ -77,7 +77,7 @@ public interface UserRepository {
       """
           SELECT *
           FROM user_humg
-          WHERE LOWER(first_name) LIKE LOWER(${keyword}) OR LOWER(last_name) LIKE LOWER(#{keyword}) AND
+          WHERE ((LOWER(first_name) LIKE LOWER(#{keyword})) OR (LOWER(last_name) LIKE LOWER(#{keyword}))) AND
                 role::text LIKE #{role} AND is_active = true
           ORDER BY created DESC
           LIMIT #{limit} OFFSET #{offset}
@@ -87,7 +87,8 @@ public interface UserRepository {
   @Select(
       """
               SELECT COUNT(id)
-              WHERE LOWER(first_name) LIKE LOWER(${keyword}) OR LOWER(last_name) LIKE LOWER(#{keyword}) AND
+              FROM user_humg
+              WHERE ((LOWER(first_name) LIKE LOWER(#{keyword})) OR (LOWER(last_name) LIKE LOWER(#{keyword}))) AND
                 role::text LIKE #{role} AND is_active = true
           """)
   int countByKeywordAndRole(String keyword, String role);

@@ -9,16 +9,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 import vn.edu.humg.olympic.api.model.Role;
 import vn.edu.humg.olympic.api.model.User;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("test")
-@Transactional
+@Rollback
 class UserRepositoryTest {
 
   @Autowired private UserRepository userRepository;
@@ -199,5 +199,166 @@ class UserRepositoryTest {
     assertThat(found.getPasswordHash()).isEqualTo(existing.getPasswordHash());
     assertThat(found.getGender()).isEqualTo(existing.getGender());
     assertThat(found.getRole()).isEqualTo(existing.getRole());
+  }
+
+  @Test
+  void search_shouldReturnMatchedActiveUsersByKeywordAndRole() {
+    String keywordCore = generateRandomText(5).toLowerCase();
+    String keywordPattern = "%" + keywordCore + "%";
+    String rolePattern = Role.STUDENT.name();
+
+    User otherRole =
+        User.builder()
+            .firstName(keywordCore + generateRandomText(5))
+            .lastName(generateRandomText(10))
+            .email(generateRandomEmail())
+            .passwordHash(generateRandomText())
+            .gender(generateGender())
+            .birthday(Date.valueOf(generateRandomLocalDate()))
+            .role(Role.TEACHER)
+            .phone(generateRandomVNPhoneNumber())
+            .universityName(generateRandomText(20))
+            .facultyName(generateRandomText(20))
+            .avatarUrl(generateRandomText(20))
+            .isActive(true)
+            .build();
+    userRepository.save(otherRole);
+
+    User inactive =
+        User.builder()
+            .firstName(keywordCore + generateRandomText(5))
+            .lastName(generateRandomText(10))
+            .email(generateRandomEmail())
+            .passwordHash(generateRandomText())
+            .gender(generateGender())
+            .birthday(Date.valueOf(generateRandomLocalDate()))
+            .role(Role.STUDENT)
+            .phone(generateRandomVNPhoneNumber())
+            .universityName(generateRandomText(20))
+            .facultyName(generateRandomText(20))
+            .avatarUrl(generateRandomText(20))
+            .isActive(false)
+            .build();
+    userRepository.save(inactive);
+
+    User user1 =
+        User.builder()
+            .firstName(keywordCore + generateRandomText(5))
+            .lastName(generateRandomText(10))
+            .email(generateRandomEmail())
+            .passwordHash(generateRandomText())
+            .gender(generateGender())
+            .birthday(Date.valueOf(generateRandomLocalDate()))
+            .role(Role.STUDENT)
+            .phone(generateRandomVNPhoneNumber())
+            .universityName(generateRandomText(20))
+            .facultyName(generateRandomText(20))
+            .avatarUrl(generateRandomText(20))
+            .isActive(true)
+            .build();
+    userRepository.save(user1);
+    Long id1 = userRepository.findByEmail(user1.getEmail()).orElseThrow().getId();
+
+    User user2 =
+        User.builder()
+            .firstName(generateRandomText(10))
+            .lastName(generateRandomText(5) + keywordCore)
+            .email(generateRandomEmail())
+            .passwordHash(generateRandomText())
+            .gender(generateGender())
+            .birthday(Date.valueOf(generateRandomLocalDate()))
+            .role(Role.STUDENT)
+            .phone(generateRandomVNPhoneNumber())
+            .universityName(generateRandomText(20))
+            .facultyName(generateRandomText(20))
+            .avatarUrl(generateRandomText(20))
+            .isActive(true)
+            .build();
+    userRepository.save(user2);
+    Long id2 = userRepository.findByEmail(user2.getEmail()).orElseThrow().getId();
+
+    var result = userRepository.search(0, 2, keywordPattern, rolePattern);
+
+    assertThat(result).extracting(User::getId).containsExactlyInAnyOrder(id1, id2);
+    assertThat(result).allMatch(u -> u.getRole() == Role.STUDENT && u.getIsActive());
+  }
+
+  @Test
+  void countByKeywordAndRole_shouldReturnCorrectCount() {
+    String keywordCore = generateRandomText(5).toLowerCase() + "0000000";
+    String keywordPattern = "%" + keywordCore + "%";
+    String rolePattern = Role.STUDENT.name();
+
+    User u1 =
+        User.builder()
+            .firstName(generateRandomText(5))
+            .lastName(generateRandomText(10))
+            .email(generateRandomEmail())
+            .passwordHash(generateRandomText())
+            .gender(generateGender())
+            .birthday(Date.valueOf(generateRandomLocalDate()))
+            .role(Role.STUDENT)
+            .phone(generateRandomVNPhoneNumber())
+            .universityName(generateRandomText(20))
+            .facultyName(generateRandomText(20))
+            .avatarUrl(generateRandomText(20))
+            .isActive(true)
+            .build();
+    userRepository.save(u1);
+
+    User u2 =
+        User.builder()
+            .firstName(generateRandomText(10))
+            .lastName(generateRandomText(5) + keywordCore)
+            .email(generateRandomEmail())
+            .passwordHash(generateRandomText())
+            .gender(generateGender())
+            .birthday(Date.valueOf(generateRandomLocalDate()))
+            .role(Role.STUDENT)
+            .phone(generateRandomVNPhoneNumber())
+            .universityName(generateRandomText(20))
+            .facultyName(generateRandomText(20))
+            .avatarUrl(generateRandomText(20))
+            .isActive(true)
+            .build();
+    userRepository.save(u2);
+
+    User otherRole =
+        User.builder()
+            .firstName(keywordCore + generateRandomText(5))
+            .lastName(generateRandomText(10))
+            .email(generateRandomEmail())
+            .passwordHash(generateRandomText())
+            .gender(generateGender())
+            .birthday(Date.valueOf(generateRandomLocalDate()))
+            .role(Role.STUDENT)
+            .phone(generateRandomVNPhoneNumber())
+            .universityName(generateRandomText(20))
+            .facultyName(generateRandomText(20))
+            .avatarUrl(generateRandomText(20))
+            .isActive(true)
+            .build();
+    userRepository.save(otherRole);
+
+    User inactive =
+        User.builder()
+            .firstName(keywordCore + generateRandomText(5))
+            .lastName(generateRandomText(10))
+            .email(generateRandomEmail())
+            .passwordHash(generateRandomText())
+            .gender(generateGender())
+            .birthday(Date.valueOf(generateRandomLocalDate()))
+            .role(Role.STUDENT)
+            .phone(generateRandomVNPhoneNumber())
+            .universityName(generateRandomText(20))
+            .facultyName(generateRandomText(20))
+            .avatarUrl(generateRandomText(20))
+            .isActive(false)
+            .build();
+    userRepository.save(inactive);
+
+    int count = userRepository.countByKeywordAndRole(keywordPattern, rolePattern);
+
+    assertThat(count).isEqualTo(2);
   }
 }
