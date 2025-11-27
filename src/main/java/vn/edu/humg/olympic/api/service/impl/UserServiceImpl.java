@@ -1,5 +1,6 @@
 package vn.edu.humg.olympic.api.service.impl;
 
+import io.micrometer.common.util.StringUtils;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import vn.edu.humg.olympic.api.exception.ErrorCode;
 import vn.edu.humg.olympic.api.exception.ResourceException;
 import vn.edu.humg.olympic.api.model.AuthenticatedUser;
 import vn.edu.humg.olympic.api.model.User;
+import vn.edu.humg.olympic.api.model.request.UserUpdateRequest;
 import vn.edu.humg.olympic.api.model.response.UserResponse;
 import vn.edu.humg.olympic.api.repository.UserRepository;
 import vn.edu.humg.olympic.api.service.UserService;
@@ -46,9 +48,61 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public UserResponse getUser(Long id) {
+    log.debug("Get user by userId:{}", id);
     User user =
         userRepository.findById(id).orElseThrow(() -> new ResourceException(ErrorCode.NOT_FOUND));
-
+    log.debug("Get user successfully by id:{}", id);
     return UserConverter.to(user);
+  }
+
+  @Override
+  public void update(UserUpdateRequest request) {
+    var authenticatedUser = this.getCurrentUser();
+    log.debug("Update user by userId:{}", authenticatedUser.getId());
+    if (!authenticatedUser.isOwner(request.id()) && !authenticatedUser.isAdmin()) {
+      throw new ResourceException(ErrorCode.FORBIDDEN);
+    }
+
+    User user = new User();
+    user.setId(request.id());
+    user.setIsActive(true);
+    applyUpdate(user, request);
+
+    log.debug(
+        "Update user successfully for id{} -> id:{}", authenticatedUser.getId(), request.id());
+    userRepository.update(user);
+  }
+
+  private void applyUpdate(User user, UserUpdateRequest request) {
+    if (StringUtils.isNotBlank(request.firstName())) {
+      user.setFirstName(request.firstName());
+    }
+    if (StringUtils.isNotBlank(request.lastName())) {
+      user.setLastName(request.lastName());
+    }
+    if (request.gender() != null) {
+      user.setGender(request.gender());
+    }
+    if (request.role() != null) {
+      user.setRole(request.role());
+    }
+    if (StringUtils.isNotBlank(request.phone())) {
+      user.setPhone(request.phone());
+    }
+    if (request.isActive() != null) {
+      user.setIsActive(request.isActive());
+    }
+    if (request.birthday() != null) {
+      user.setBirthday(request.birthday());
+    }
+    if (StringUtils.isNotBlank(request.universityName())) {
+      user.setUniversityName(request.universityName());
+    }
+    if (StringUtils.isNotBlank(request.facultyName())) {
+      user.setFacultyName(request.facultyName());
+    }
+    if (StringUtils.isNotBlank(request.avatarUrl())) {
+      user.setAvatarUrl(request.avatarUrl());
+    }
   }
 }

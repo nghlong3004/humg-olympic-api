@@ -29,7 +29,7 @@ public final class GenerateRandom {
     String characters = "abcdefghijklmnopqrstuvwxyz";
     StringBuilder password = new StringBuilder();
 
-    int usernameLength = random.nextInt(number) + 3;
+    int usernameLength = random.nextInt(number) + 1;
     for (int i = 0; i < usernameLength; i++) {
       password.append(characters.charAt(random.nextInt(characters.length())));
     }
