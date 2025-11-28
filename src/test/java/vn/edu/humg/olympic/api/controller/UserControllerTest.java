@@ -3,6 +3,7 @@ package vn.edu.humg.olympic.api.controller;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import java.sql.Date;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,8 +25,11 @@ import vn.edu.humg.olympic.api.converter.UserConverter;
 import vn.edu.humg.olympic.api.exception.ErrorCode;
 import vn.edu.humg.olympic.api.exception.ResourceException;
 import vn.edu.humg.olympic.api.filter.JwtAuthenticationFilter;
+import vn.edu.humg.olympic.api.model.Role;
 import vn.edu.humg.olympic.api.model.User;
 import vn.edu.humg.olympic.api.model.request.UserUpdateRequest;
+import vn.edu.humg.olympic.api.model.response.PageResponse;
+import vn.edu.humg.olympic.api.model.response.UserResponse;
 import vn.edu.humg.olympic.api.service.UserService;
 import vn.edu.humg.olympic.api.util.GenerateRandom;
 
@@ -188,5 +192,78 @@ public class UserControllerTest {
         .created(GenerateRandom.generateRandomTimestamp())
         .updated(GenerateRandom.generateRandomTimestamp())
         .build();
+  }
+
+  @Test
+  void search_shouldCallServiceAndReturnPageResponse() throws Exception {
+    String keyword = GenerateRandom.generateRandomText(10);
+    Role role = Role.STUDENT;
+    int page = GenerateRandom.generateNumber(3);
+    int size = GenerateRandom.generateNumber(50);
+
+    var mockResponse =
+        PageResponse.<UserResponse>builder()
+            .items(List.of())
+            .page(page)
+            .size(size)
+            .totalItem(0)
+            .totalPage(0)
+            .build();
+
+    Mockito.when(userService.search(page, size, keyword, role)).thenReturn(mockResponse);
+
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.get(APIConstant.API_USER_PATH + "/search")
+                .param("keyword", keyword)
+                .param("role", role.name())
+                .param("page", String.valueOf(page))
+                .param("size", String.valueOf(size))
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(MockMvcResultMatchers.status().isOk())
+        .andExpect(jsonPath("$.page").value(page))
+        .andExpect(jsonPath("$.size").value(size))
+        .andExpect(jsonPath("$.totalItem").value(0));
+
+    Mockito.verify(userService).search(page, size, keyword, role);
+  }
+
+  @Test
+  void search_shouldReturnBadRequest_whenKeywordTooLong() throws Exception {
+    String keyword = "GenerateRandom.generateRandomText(25)";
+    Role role = Role.TEACHER;
+
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.get(APIConstant.API_USER_PATH + "/search")
+                .param("keyword", keyword)
+                .param("role", role.name())
+                .param("page", "1")
+                .param("size", "10")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(MockMvcResultMatchers.status().isBadRequest());
+  }
+
+  @Test
+  void search_shouldReturnBadRequest_whenServiceThrowsException() throws Exception {
+    String keyword = GenerateRandom.generateRandomText(10);
+    Role role = Role.STUDENT;
+    int page = 1;
+    int size = 10;
+
+    Mockito.when(userService.search(page, size, keyword, role))
+        .thenThrow(new ResourceException(ErrorCode.INVALID_REQUEST));
+
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.get(APIConstant.API_USER_PATH + "/search")
+                .param("keyword", keyword)
+                .param("role", role.name())
+                .param("page", String.valueOf(page))
+                .param("size", String.valueOf(size))
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(MockMvcResultMatchers.status().isBadRequest());
+
+    Mockito.verify(userService).search(page, size, keyword, role);
   }
 }
