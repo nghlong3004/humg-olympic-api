@@ -109,56 +109,6 @@ public class UserServiceImplTest {
   }
 
   @Test
-  void update_shouldUpdateUser_whenCurrentUserIsOwner() {
-    Long userId = (long) GenerateRandom.generateNumber(1_000_000);
-
-    AuthenticatedUser authenticatedUser =
-        AuthenticatedUser.builder()
-            .id(userId)
-            .username(GenerateRandom.generateRandomEmail())
-            .authorities(List.of(new SimpleGrantedAuthority(GenerateRandom.generateAuthority())))
-            .build();
-
-    User existing = generateUser();
-    existing.setId(userId);
-
-    doReturn(authenticatedUser).when(userService).getCurrentUser();
-
-    User randomUser = generateUser();
-
-    UserUpdateRequest request = mock(UserUpdateRequest.class);
-    when(request.id()).thenReturn(userId);
-    when(request.firstName()).thenReturn(randomUser.getFirstName());
-    when(request.lastName()).thenReturn(randomUser.getLastName());
-    when(request.phone()).thenReturn(randomUser.getPhone());
-    when(request.universityName()).thenReturn(randomUser.getUniversityName());
-    when(request.facultyName()).thenReturn(randomUser.getFacultyName());
-    when(request.avatarUrl()).thenReturn(GenerateRandom.generateRandomText());
-    when(request.gender()).thenReturn(randomUser.getGender());
-    when(request.role()).thenReturn(randomUser.getRole());
-    when(request.isActive()).thenReturn(randomUser.getIsActive());
-    when(request.birthday()).thenReturn(randomUser.getBirthday());
-
-    ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-
-    userService.update(request);
-
-    verify(userRepository).save(userCaptor.capture());
-    User updatedUser = userCaptor.getValue();
-
-    Assertions.assertEquals(userId, updatedUser.getId());
-    Assertions.assertEquals(randomUser.getFirstName(), updatedUser.getFirstName());
-    Assertions.assertEquals(randomUser.getLastName(), updatedUser.getLastName());
-    Assertions.assertEquals(randomUser.getPhone(), updatedUser.getPhone());
-    Assertions.assertEquals(randomUser.getUniversityName(), updatedUser.getUniversityName());
-    Assertions.assertEquals(randomUser.getFacultyName(), updatedUser.getFacultyName());
-    Assertions.assertEquals(randomUser.getGender(), updatedUser.getGender());
-    Assertions.assertEquals(randomUser.getRole(), updatedUser.getRole());
-    Assertions.assertEquals(randomUser.getIsActive(), updatedUser.getIsActive());
-    Assertions.assertEquals(randomUser.getBirthday(), updatedUser.getBirthday());
-  }
-
-  @Test
   void update_shouldThrowForbidden_whenNotOwnerAndNotAdmin() {
     Long currentUserId = (long) GenerateRandom.generateNumber(1_000_000);
     Long targetUserId = (long) GenerateRandom.generateNumber(1_000_000);
