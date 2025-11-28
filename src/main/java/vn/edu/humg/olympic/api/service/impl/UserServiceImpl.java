@@ -4,10 +4,15 @@ import io.micrometer.common.util.StringUtils;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.edu.humg.olympic.api.constant.JwtConstant;
 import vn.edu.humg.olympic.api.converter.UserConverter;
 import vn.edu.humg.olympic.api.exception.ErrorCode;
@@ -41,6 +46,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public UserResponse getUser() {
     var authentication = SecurityContextHolder.getContext().getAuthentication();
     var jwt = (Jwt) authentication.getPrincipal();
@@ -49,6 +55,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public UserResponse getUser(Long id) {
     log.debug("Get user by userId:{}", id);
     User user =
@@ -58,6 +65,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional
   public void update(UserUpdateRequest request) {
     var authenticatedUser = this.getCurrentUser();
     log.debug("Update user by userId:{}", authenticatedUser.getId());
@@ -65,31 +73,33 @@ public class UserServiceImpl implements UserService {
       throw new ResourceException(ErrorCode.FORBIDDEN);
     }
 
-    User user = new User();
-    user.setId(request.id());
-    user.setIsActive(true);
+    User user =
+        userRepository
+            .findById(request.id())
+            .orElseThrow(() -> new ResourceException(ErrorCode.NOT_FOUND));
     applyUpdate(user, request);
 
     log.debug(
-        "Update user successfully for id{} -> id:{}", authenticatedUser.getId(), request.id());
-    userRepository.update(user);
+        "Update user successfully for currentUserId:{} -> updatedUserId:{}",
+        authenticatedUser.getId(),
+        request.id());
   }
 
   @Override
+  @Transactional(readOnly = true)
   public PageResponse<UserResponse> search(int page, int size, String keyword, Role role) {
     log.debug("Search user by keyword:{} and role:{}", keyword, role);
 
-    int offset = page * size;
     keyword = "%" + keyword + "%";
-    String roleString = "%" + role.name() + "%";
-
-    int total = userRepository.countByKeywordAndRole(keyword, roleString);
-    if (total == 0) {
-      return buildPageResponse(List.of(), page, size, total);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created"));
+    Page<User> userPage = userRepository.search(keyword, role.name(), pageable);
+    if (userPage.isEmpty()) {
+      return buildPageResponse(List.of(), page, size, 0L);
     }
 
-    var users = userRepository.search(offset, size, keyword, roleString);
-    return buildPageResponse(UserConverter.to(users), page, size, total);
+    var items = UserConverter.to(userPage.getContent());
+    return buildPageResponse(
+        items, userPage.getNumber(), userPage.getSize(), userPage.getTotalElements());
   }
 
   private PageResponse<UserResponse> buildPageResponse(

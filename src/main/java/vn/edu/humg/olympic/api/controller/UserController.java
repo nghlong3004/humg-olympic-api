@@ -51,7 +51,7 @@ public class UserController {
       @RequestParam @Size(max = 20, message = "full name must be at most 20 characters")
           String keyword,
       @RequestParam Role role,
-      @RequestParam(defaultValue = "0") @Min(1) int page,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
     return userService.search(page, size, keyword, role);
   }
