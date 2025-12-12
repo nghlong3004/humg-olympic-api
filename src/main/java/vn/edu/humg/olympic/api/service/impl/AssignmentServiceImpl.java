@@ -5,6 +5,10 @@ import java.sql.Timestamp;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.humg.olympic.api.converter.AssignmentConverter;
@@ -23,10 +27,10 @@ import vn.edu.humg.olympic.api.service.UserService;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AssignmentServiceImpl implements AssignmentService {
 
   private final AssignmentRepository assignmentRepository;
-
   private final UserService userService;
 
   @Override
@@ -45,6 +49,7 @@ public class AssignmentServiceImpl implements AssignmentService {
     var assignment = AssignmentConverter.from(request);
     assignment.setOwnerId(currentUser.getId());
     assignment.setIsActive(true);
+
     log.debug("Save assignment:{} by ownerId:{}", request, currentUser.getId());
     assignmentRepository.save(assignment);
     log.debug("Successfully save assignment");
@@ -54,33 +59,33 @@ public class AssignmentServiceImpl implements AssignmentService {
   @Transactional(readOnly = true)
   public PageResponse<AssignmentResponse> list(int page, int size) {
     log.debug("List assignments → page={}, size={}", page, size);
-
     validatePageAndSize(page, size);
 
-    int offset = page * size;
+    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updated"));
 
-    var assignments = assignmentRepository.findAllAssignment(offset, size);
-    long totalItems = assignmentRepository.countAll();
-    int totalPages = (int) Math.ceil((double) totalItems / size);
+    Page<Assignment> assignmentPage = assignmentRepository.findByIsActiveTrue(pageable);
+
+    var items = AssignmentConverter.to(assignmentPage.getContent());
 
     log.info(
         "Found {} assignments (page={}/{}, totalItems={})",
-        assignments.size(),
-        page,
-        totalPages,
-        totalItems);
+        items.size(),
+        assignmentPage.getNumber(),
+        assignmentPage.getTotalPages(),
+        assignmentPage.getTotalElements());
 
-    var items = AssignmentConverter.to(assignments);
-
-    log.debug("PageResponse (list) returned");
-    return buildPageResponse(items, page, size, totalItems);
+    return buildPageResponse(
+        items,
+        assignmentPage.getNumber(),
+        assignmentPage.getSize(),
+        assignmentPage.getTotalElements(),
+        assignmentPage.getTotalPages());
   }
 
   @Override
   @Transactional(readOnly = true)
   public PageResponse<AssignmentResponse> search(int page, int size, String keyword) {
     log.debug("Search assignments by title → page={}, size={}, keyword='{}'", page, size, keyword);
-
     validatePageAndSize(page, size);
 
     if (keyword == null || keyword.isBlank()) {
@@ -88,28 +93,31 @@ public class AssignmentServiceImpl implements AssignmentService {
       throw new ResourceException(ErrorCode.INVALID_REQUEST);
     }
 
-    int offset = page * size;
-    String pattern = "%" + keyword.trim() + "%";
-    var assignments = assignmentRepository.findAllAssignmentByTitle(offset, size, pattern);
-    long totalItems = assignmentRepository.countAllAssignmentByTitle(pattern);
-    int totalPages = (int) Math.ceil((double) totalItems / size);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updated"));
+
+    Page<Assignment> assignmentPage =
+        assignmentRepository.findByIsActiveTrueAndTitleContainingIgnoreCase(
+            keyword.trim(), pageable);
+
+    var items = AssignmentConverter.to(assignmentPage.getContent());
 
     log.info(
         "Found {} assignments by title (page={}/{}, totalItems={}) [keyword='{}']",
-        assignments.size(),
-        page,
-        totalPages,
-        totalItems,
+        items.size(),
+        assignmentPage.getNumber(),
+        assignmentPage.getTotalPages(),
+        assignmentPage.getTotalElements(),
         keyword);
 
-    var items = AssignmentConverter.to(assignments);
-
-    log.debug("PageResponse (searchByTitle) returned");
-    return buildPageResponse(items, page, size, totalItems);
+    return buildPageResponse(
+        items,
+        assignmentPage.getNumber(),
+        assignmentPage.getSize(),
+        assignmentPage.getTotalElements(),
+        assignmentPage.getTotalPages());
   }
 
   @Override
-  @Transactional
   public void update(AssignmentUpdateRequest request) {
     log.debug(
         "update assignment id:{} -> title:{}, description:{}, subjectName:{}, startTime:{}, endTime:{}",
@@ -129,7 +137,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     applyUpdate(assignment, request);
 
-    assignmentRepository.update(assignment);
+    assignmentRepository.save(assignment);
   }
 
   @Override
@@ -145,7 +153,8 @@ public class AssignmentServiceImpl implements AssignmentService {
     validateOwnershipOrAdmin(assignment, currentUser);
     validateAssignmentIsActive(assignment);
 
-    assignmentRepository.delete(id);
+    assignment.setIsActive(false);
+    assignmentRepository.save(assignment);
   }
 
   private Assignment findAssignmentOrThrow(Long id) {
@@ -206,9 +215,7 @@ public class AssignmentServiceImpl implements AssignmentService {
   }
 
   private PageResponse<AssignmentResponse> buildPageResponse(
-      List<AssignmentResponse> items, int page, int size, long totalItems) {
-
-    int totalPages = (int) Math.ceil((double) totalItems / size);
+      List<AssignmentResponse> items, int page, int size, long totalItems, int totalPages) {
 
     return PageResponse.<AssignmentResponse>builder()
         .items(items)

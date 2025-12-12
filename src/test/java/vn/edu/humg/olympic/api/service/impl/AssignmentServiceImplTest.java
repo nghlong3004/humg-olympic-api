@@ -13,6 +13,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import vn.edu.humg.olympic.api.converter.AssignmentConverter;
 import vn.edu.humg.olympic.api.exception.ErrorCode;
@@ -67,6 +72,7 @@ class AssignmentServiceImplTest {
         Assignment saved = captor.getValue();
         assertNotNull(saved);
         assertEquals(currentUser.getId(), saved.getOwnerId());
+        assertTrue(saved.getIsActive());
       }
     }
   }
@@ -112,7 +118,6 @@ class AssignmentServiceImplTest {
     for (int i = 0; i < n; ++i) {
       int page = GenerateRandom.generateNumber(3) - 1;
       int size = GenerateRandom.generateNumber(20);
-      int offset = page * size;
 
       int itemCount = GenerateRandom.generateNumber(size);
       List<Assignment> assignments =
@@ -128,13 +133,16 @@ class AssignmentServiceImplTest {
                               Timestamp.valueOf(GenerateRandom.generateRandomLocalDateTime()))
                           .endTime(Timestamp.valueOf(GenerateRandom.generateRandomLocalDateTime()))
                           .updated(Timestamp.valueOf(GenerateRandom.generateRandomLocalDateTime()))
+                          .isActive(true)
                           .build())
               .toList();
 
-      long totalItems = GenerateRandom.generateNumber(200);
+      long totalItems = assignments.size();
 
-      when(assignmentRepository.findAllAssignment(offset, size)).thenReturn(assignments);
-      when(assignmentRepository.countAll()).thenReturn(totalItems);
+      Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updated"));
+      Page<Assignment> assignmentPage = new PageImpl<>(assignments, pageable, totalItems);
+
+      when(assignmentRepository.findByIsActiveTrue(any(Pageable.class))).thenReturn(assignmentPage);
 
       List<AssignmentResponse> responses =
           assignments.stream()
@@ -162,13 +170,12 @@ class AssignmentServiceImplTest {
         assertNotNull(result);
         assertEquals(page, result.page());
         assertEquals(size, result.size());
-        assertEquals(totalItems, result.totalItem());
-        int expectedTotalPages = (int) Math.ceil((double) totalItems / size);
-        assertEquals(expectedTotalPages, result.totalPage());
-        assertEquals(responses.size(), result.items().size());
 
-        verify(assignmentRepository, times(1)).findAllAssignment(offset, size);
-        verify(assignmentRepository, times(1)).countAll();
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(assignmentRepository, times(1)).findByIsActiveTrue(pageableCaptor.capture());
+        Pageable actualPageable = pageableCaptor.getValue();
+        assertEquals(page, actualPageable.getPageNumber());
+        assertEquals(size, actualPageable.getPageSize());
 
         reset(assignmentRepository);
       }
@@ -210,8 +217,8 @@ class AssignmentServiceImplTest {
     for (int i = 0; i < n; ++i) {
       int page = GenerateRandom.generateNumber(3) - 1;
       int size = GenerateRandom.generateNumber(20);
-      int offset = page * size;
       String keyword = GenerateRandom.generateRandomText(10);
+      String trimmedKeyword = keyword.trim();
 
       int itemCount = GenerateRandom.generateNumber(size);
       List<Assignment> assignments =
@@ -220,21 +227,25 @@ class AssignmentServiceImplTest {
                   idx ->
                       Assignment.builder()
                           .id((long) GenerateRandom.generateNumber(1_000_000))
-                          .title("title-" + keyword + "-" + idx)
+                          .title("title-" + trimmedKeyword + "-" + idx)
                           .description(GenerateRandom.generateRandomText(40))
                           .subjectName(GenerateRandom.generateRandomText(10))
                           .startTime(
                               Timestamp.valueOf(GenerateRandom.generateRandomLocalDateTime()))
                           .endTime(Timestamp.valueOf(GenerateRandom.generateRandomLocalDateTime()))
                           .updated(Timestamp.valueOf(GenerateRandom.generateRandomLocalDateTime()))
+                          .isActive(true)
                           .build())
               .toList();
 
-      long totalItems = GenerateRandom.generateNumber(100);
-      String pattern = "%" + keyword.trim() + "%";
-      when(assignmentRepository.findAllAssignmentByTitle(offset, size, pattern))
-          .thenReturn(assignments);
-      when(assignmentRepository.countAllAssignmentByTitle(pattern)).thenReturn(totalItems);
+      long totalItems = assignments.size();
+
+      Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updated"));
+      Page<Assignment> assignmentPage = new PageImpl<>(assignments, pageable, totalItems);
+
+      when(assignmentRepository.findByIsActiveTrueAndTitleContainingIgnoreCase(
+              eq(trimmedKeyword), any(Pageable.class)))
+          .thenReturn(assignmentPage);
 
       List<AssignmentResponse> responses =
           assignments.stream()
@@ -262,13 +273,15 @@ class AssignmentServiceImplTest {
         assertNotNull(result);
         assertEquals(page, result.page());
         assertEquals(size, result.size());
-        assertEquals(totalItems, result.totalItem());
-        int expectedTotalPages = (int) Math.ceil((double) totalItems / size);
-        assertEquals(expectedTotalPages, result.totalPage());
         assertEquals(responses.size(), result.items().size());
 
-        verify(assignmentRepository, times(1)).findAllAssignmentByTitle(offset, size, pattern);
-        verify(assignmentRepository, times(1)).countAllAssignmentByTitle(pattern);
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(assignmentRepository, times(1))
+            .findByIsActiveTrueAndTitleContainingIgnoreCase(
+                eq(trimmedKeyword), pageableCaptor.capture());
+        Pageable actualPageable = pageableCaptor.getValue();
+        assertEquals(page, actualPageable.getPageNumber());
+        assertEquals(size, actualPageable.getPageSize());
 
         reset(assignmentRepository);
       }
@@ -371,7 +384,7 @@ class AssignmentServiceImplTest {
     assignmentService.update(request);
 
     ArgumentCaptor<Assignment> captor = ArgumentCaptor.forClass(Assignment.class);
-    verify(assignmentRepository).update(captor.capture());
+    verify(assignmentRepository).save(captor.capture());
 
     Assignment updated = captor.getValue();
     assertEquals(request.title(), updated.getTitle());
@@ -415,7 +428,7 @@ class AssignmentServiceImplTest {
     assignmentService.update(request);
 
     ArgumentCaptor<Assignment> captor = ArgumentCaptor.forClass(Assignment.class);
-    verify(assignmentRepository).update(captor.capture());
+    verify(assignmentRepository).save(captor.capture());
 
     Assignment updated = captor.getValue();
     assertEquals(request.title(), updated.getTitle());
@@ -433,7 +446,7 @@ class AssignmentServiceImplTest {
         assertThrows(ResourceException.class, () -> assignmentService.update(request));
 
     assertEquals(ErrorCode.NOT_FOUND, ex.getErrorCode());
-    verify(assignmentRepository, never()).update(any());
+    verify(assignmentRepository, never()).save(any(Assignment.class));
   }
 
   @Test
@@ -470,7 +483,7 @@ class AssignmentServiceImplTest {
         assertThrows(ResourceException.class, () -> assignmentService.update(request));
 
     assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
-    verify(assignmentRepository, never()).update(any());
+    verify(assignmentRepository, never()).save(any(Assignment.class));
   }
 
   @Test
@@ -506,7 +519,7 @@ class AssignmentServiceImplTest {
         assertThrows(ResourceException.class, () -> assignmentService.update(request));
 
     assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
-    verify(assignmentRepository, never()).update(any());
+    verify(assignmentRepository, never()).save(any(Assignment.class));
   }
 
   @Test
@@ -549,11 +562,11 @@ class AssignmentServiceImplTest {
         assertThrows(ResourceException.class, () -> assignmentService.update(request));
 
     assertEquals(ErrorCode.INVALID_REQUEST, ex.getErrorCode());
-    verify(assignmentRepository, never()).update(any());
+    verify(assignmentRepository, never()).save(any(Assignment.class));
   }
 
   @Test
-  void delete_shouldDeleteAssignment_whenOwnerAndActive() {
+  void delete_shouldSoftDeleteAssignment_whenOwnerAndActive() {
     long assignmentId = GenerateRandom.generateNumber(1_000_000);
     long ownerId = GenerateRandom.generateNumber(1_000_000);
 
@@ -585,11 +598,15 @@ class AssignmentServiceImplTest {
 
     assignmentService.delete(assignmentId);
 
-    verify(assignmentRepository, times(1)).delete(assignmentId);
+    ArgumentCaptor<Assignment> captor = ArgumentCaptor.forClass(Assignment.class);
+    verify(assignmentRepository, times(1)).save(captor.capture());
+    Assignment deleted = captor.getValue();
+    assertEquals(assignmentId, deleted.getId());
+    assertFalse(deleted.getIsActive());
   }
 
   @Test
-  void delete_shouldAllowAdminToDelete_whenAdminNotOwnerAndActive() {
+  void delete_shouldAllowAdminToSoftDelete_whenAdminNotOwnerAndActive() {
     long assignmentId = GenerateRandom.generateNumber(1_000_000);
     long ownerId = GenerateRandom.generateNumber(1_000_000);
     long adminId = ownerId + 123;
@@ -622,7 +639,11 @@ class AssignmentServiceImplTest {
 
     assignmentService.delete(assignmentId);
 
-    verify(assignmentRepository, times(1)).delete(assignmentId);
+    ArgumentCaptor<Assignment> captor = ArgumentCaptor.forClass(Assignment.class);
+    verify(assignmentRepository, times(1)).save(captor.capture());
+    Assignment deleted = captor.getValue();
+    assertEquals(assignmentId, deleted.getId());
+    assertFalse(deleted.getIsActive());
   }
 
   @Test
@@ -635,7 +656,7 @@ class AssignmentServiceImplTest {
         assertThrows(ResourceException.class, () -> assignmentService.delete(assignmentId));
 
     assertEquals(ErrorCode.NOT_FOUND, ex.getErrorCode());
-    verify(assignmentRepository, never()).delete(anyLong());
+    verify(assignmentRepository, never()).save(any(Assignment.class));
   }
 
   @Test
@@ -674,7 +695,7 @@ class AssignmentServiceImplTest {
         assertThrows(ResourceException.class, () -> assignmentService.delete(assignmentId));
 
     assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
-    verify(assignmentRepository, never()).delete(anyLong());
+    verify(assignmentRepository, never()).save(any(Assignment.class));
   }
 
   @Test
@@ -712,6 +733,6 @@ class AssignmentServiceImplTest {
         assertThrows(ResourceException.class, () -> assignmentService.delete(assignmentId));
 
     assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
-    verify(assignmentRepository, never()).delete(anyLong());
+    verify(assignmentRepository, never()).save(any(Assignment.class));
   }
 }
