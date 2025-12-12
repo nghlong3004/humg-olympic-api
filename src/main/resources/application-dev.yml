@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: humg-olympic-api
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER}
+  jpa:
+    show-sql: true
+  Jackson:
+    default-property-inclusion: non_null
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY}
+      access-token-expiration: ${ACCESS_TOKEN_EXPIRATION}
+      refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}
+      algorithm: HmacSHA256

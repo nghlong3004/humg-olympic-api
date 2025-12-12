@@ -30,9 +30,9 @@
       "total_pages": 5  
     }
 
-### **Cơ chế Authentication (JWT + Refresh Token)**
+### **Authentication**
 
-1. **Access Token**: Gửi trong Header Authorization: Bearer <token>. Thời gian sống ngắn (ví dụ: 15-30 phút).  
+1. **Access Token**: Gửi trong Header Authorization: Bearer <token>. Thời gian sống ngắn (15 phút).  
 2. **Refresh Token**: Lưu trong **HttpOnly Cookie**. Thời gian sống dài (ví dụ: 7-30 ngày). Frontend không thể đọc cookie này (chống XSS), nó tự động được browser gửi kèm request khi gọi API refresh.
 
 ## **2. Định dạng Phản hồi Lỗi**
